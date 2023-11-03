@@ -16,15 +16,18 @@ conn = psycopg2.connect(
 )
 
 
-def get_pg_stat_activity():
+def get_active_sessions() -> int:
     with conn.cursor() as cur:
-        cur.execute("SELECT count(*) FROM pg_stat_activity;")
+        cur.execute(
+            "SELECT count(*) FROM pg_stat_activity " +
+            "WHERE state='active';"
+        )
         result = cur.fetchall()
         return result[0][0]
 
 
 
-def get_lwlock():
+def get_lwlock_count() -> int:
     with conn.cursor() as cur:
         cur.execute(
             "SELECT count(*) FROM pg_stat_activity" +
@@ -55,7 +58,6 @@ def is_above_avg(exec_time: int):
             "FROM pg_stat_statements;"
         )
         all_count = int(cur.fetchone()[0]) - 1
-    print(sum_time, all_count)
     return exec_time > (sum_time/all_count)*1000
 
 
