@@ -17,8 +17,8 @@ def func(message):
         button_for_auth(message)
     elif message.text == "Cписок команд":
         show_all_commands(message)
-    elif message.text == "Спровоцировать ошибку":
-        error_msg(message)
+    # elif message.text == "Спровоцировать ошибку":
+    #     error_msg(message)
     else:
         bot.send_message(message.chat.id, text="На такую команду я не запрограммирован...")
 
@@ -45,18 +45,25 @@ def button_for_auth(message):
     bot.register_next_step_handler(sent, check_login)
 
 
-def error_msg(message):
-    check_logs = types.InlineKeyboardButton('Посмотреть логи', callback_data='check_logs')
-    markup = types.InlineKeyboardMarkup().add(check_logs)
-    bot.send_message(message.chat.id, 'Ошибка!\nБД-1', reply_markup=markup)
+def error_msg(id, number):
+    # check_logs = types.InlineKeyboardButton('Посмотреть логи', callback_data='check_logs')
+    # markup = types.InlineKeyboardMarkup().add(check_logs)
+    bot.send_message(message.chat.id, f'id = {id}\nnumber = {number}', reply_markup=markup)
+
+
+def error_msg_second(id, number, query):
+    # check_logs = types.InlineKeyboardButton('Посмотреть логи', callback_data='check_logs')
+    # markup = types.InlineKeyboardMarkup().add(check_logs)
+    bot.send_message(message.chat.id, f'id = {id}\nnumber = {number}\nquery = {query}', reply_markup=markup)
+
 
 def check_login(message):
     if message.text == 'admin':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Профиль")
         btn2 = types.KeyboardButton("Cписок команд")
-        bth3 = types.KeyboardButton("Спровоцировать ошибку")
-        markup.add(btn1, btn2, bth3)
+        # bth3 = types.KeyboardButton("Спровоцировать ошибку")
+        markup.add(btn1, btn2)
         bot.send_message(message.chat.id, 'Вход успешен', reply_markup=markup)
     else:
         sent = bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
