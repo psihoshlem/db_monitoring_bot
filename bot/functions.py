@@ -40,7 +40,13 @@ def get_the_longest_query():
             "SELECT query, total_exec_time FROM pg_stat_statements " +
             "ORDER BY total_exec_time DESC LIMIT 1;"
         )
-        query, exec_time = cur.fetchall()
+        query, exec_time = cur.fetchone()
+        cur.execute(
+            "SELECT sum(total_exec_time) AS average_execution_time" + 
+            " FROM pg_stat_statements;"
+        )
+        sum_time = cur.fetchone()
+        cur.execute("SELECT sum(calls) AS total_calls FROM pg_stat_statements;")
 
 
 
