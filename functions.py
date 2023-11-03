@@ -1,44 +1,38 @@
 import psycopg2
-
-database_name = "test_db"
-user = "postgres"
-password = "1234"
-host = "localhost"
-port = "5432"
-
-conn = psycopg2.connect(
-    dbname=database_name,
-    user=user,
-    password=password,
-    host=host,
-    port=port
+from config import (
+    db_name,
+    db_user,
+    db_password,
+    db_host,
+    db_port
 )
 
-cur = conn.cursor()
+conn = psycopg2.connect(
+    dbname=db_name,
+    user=db_user,
+    password=db_password,
+    host=db_host,
+    port=db_port
+)
+
 
 def get_pg_stat_activity():
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM pg_stat_activity;")
-    result = cur.fetchall()
-    for row in result:
-        print(row)
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM pg_stat_activity;")
+        result = cur.fetchall()
+        for row in result:
+            print(row)
 
-    cur.close()
-
-    conn.close()
 
 
 def get_lwlock():
-    cur = conn.cursor()
-    cur.execute(
+    with conn.cursor() as cur:
+        cur.execute(
             "SELECT count(*) FROM pg_stat_activity" +
             " WHERE wait_event_type = 'LWLock';"
         )
-    result = cur.fetchall()
-    for row in result:
-        print(row)
-    cur.close()
-    conn.close()
+        result = cur.fetchall()
+        return result[0][0]
 
-get_lwlock()
+print(get_lwlock())
 # get_pg_stat_activity()
