@@ -42,7 +42,7 @@ def check_login(message):
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
 def process_callback_button(call):
     bot.answer_callback_query(call.id)
-    bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=test_add_db_list([1,2,3,4]))
+    bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=test_add_db_list([4]))
 
 @bot.callback_query_handler(func=lambda call: call.data == 'check_db')
 def check_test(call):
@@ -54,15 +54,12 @@ def show_all_comands(message):
     button = telebot.types.InlineKeyboardButton('Показать все БД', callback_data='my_button')
     button2 = telebot.types.InlineKeyboardButton('Логи последней ошибки', callback_data='my_button')
     keyboard = telebot.types.InlineKeyboardMarkup().add(button, button2)
-    print(type(keyboard))
     bot.send_message(message.chat.id, 'Cписок команд', reply_markup=keyboard)
 
 def test_add_db_list(number):
-    number = ["1","2","3","4","5",]
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     for item in number:
         button = telebot.types.InlineKeyboardButton('db{}'.format(item), callback_data='check_db')
-        markup.add(button)
+        keyboard = telebot.types.InlineKeyboardMarkup().add(button)
     return keyboard
 
 bot.infinity_polling(timeout=10, long_polling_timeout = 5)
