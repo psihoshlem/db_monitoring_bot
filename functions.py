@@ -18,10 +18,9 @@ conn = psycopg2.connect(
 
 def get_pg_stat_activity():
     with conn.cursor() as cur:
-        cur.execute("SELECT * FROM pg_stat_activity;")
+        cur.execute("SELECT count(*) FROM pg_stat_activity;")
         result = cur.fetchall()
-        for row in result:
-            print(row)
+        return result[0][0]
 
 
 
@@ -34,5 +33,26 @@ def get_lwlock():
         result = cur.fetchall()
         return result[0][0]
 
-print(get_lwlock())
-# get_pg_stat_activity()
+
+def get_the_longest_query():
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT query, total_exec_time FROM pg_stat_statements " +
+            "ORDER BY total_exec_time DESC LIMIT 1;"
+        )
+        query, exec_time = cur.fetchall()
+
+
+
+def terminate_process(id: int):
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT pg_terminate_backend(pid)" + 
+            f" FROM pg_stat_activity WHERE pid = {id};"
+        )
+
+
+if __name__=="__main__":
+    # print(get_lwlock())
+    # print(get_pg_stat_activity())
+    terminate_process()
