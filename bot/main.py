@@ -14,9 +14,11 @@ def start(message):
 @bot.message_handler(content_types=['text'])
 def func(message):
     if message.text == "Вход в систему":
-        button_for_auth()
+        button_for_auth(message)
     elif message.text == "Cписок команд":
         show_all_commands(message)
+    elif message.text == "Спровоцировать ошибку":
+        error_msg(message)
     else:
         bot.send_message(message.chat.id, text="На такую команду я не запрограммирован...")
 
@@ -35,7 +37,7 @@ def button_for_start():
     return markup
 
 
-def button_for_auth():
+def button_for_auth(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     exit_btn = types.KeyboardButton('Выход')
     markup.add(exit_btn)
@@ -43,15 +45,21 @@ def button_for_auth():
     bot.register_next_step_handler(sent, check_login)
 
 
+def error_msg(message):
+    check_logs = types.InlineKeyboardButton('Посмотреть логи', callback_data='check_logs')
+    markup = types.InlineKeyboardMarkup().add(check_logs)
+    bot.send_message(message.chat.id, 'Ошибка!\nБД-1', reply_markup=markup)
+
 def check_login(message):
     if message.text == 'admin':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Профиль")
         btn2 = types.KeyboardButton("Cписок команд")
-        markup.add(btn1, btn2)
+        bth3 = types.KeyboardButton("Спровоцировать ошибку")
+        markup.add(btn1, btn2, bth3)
         bot.send_message(message.chat.id, 'Вход успешен', reply_markup=markup)
     else:
-        bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
+        sent = bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
         bot.register_next_step_handler(sent, check_login)
 
 
@@ -59,6 +67,11 @@ def check_login(message):
 def process_callback_button(call):
     keyboard = create_inline_keyboard(5)
     bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'check_logs')
+def show_logs(call):
+    bot.send_message(call.message.chat.id, 'logs: накрылось чета-чета')
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('button_'))
