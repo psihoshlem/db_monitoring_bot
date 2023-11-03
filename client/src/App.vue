@@ -1,15 +1,25 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <span v-if="status">{{ status }}</span>
+  <button style="background-color:green; cursor:pointer" @click="no_attack_db">+</button>
+  <button style="background-color:red; cursor:pointer" @click="attack_db">-</button>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
 
 export default {
   name: 'App',
-  components: {
-    HelloWorld
+  data() {
+    return {
+      status: ''
+    }
+  },
+  methods:{
+    attack_db(){
+      this.status = "poka"
+    },
+    no_attack_db(){
+      this.status = "privet"
+    }
   }
 }
 </script>
