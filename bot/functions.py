@@ -41,12 +41,22 @@ def get_the_longest_query():
             "ORDER BY total_exec_time DESC LIMIT 1;"
         )
         query, exec_time = cur.fetchone()
+    return query, exec_time
+
+def is_above_avg(exec_time: int):
+    with conn.cursor() as cur:
         cur.execute(
             "SELECT sum(total_exec_time) AS average_execution_time" + 
             " FROM pg_stat_statements;"
         )
-        sum_time = cur.fetchone()
-        cur.execute("SELECT sum(calls) AS total_calls FROM pg_stat_statements;")
+        sum_time = cur.fetchone()[0] - exec_time
+        cur.execute(
+            "SELECT sum(calls) AS total_calls " + 
+            "FROM pg_stat_statements;"
+        )
+        all_count = int(cur.fetchone()[0]) - 1
+    print(sum_time, all_count)
+    return exec_time > (sum_time/all_count)*1000
 
 
 
@@ -61,4 +71,7 @@ def terminate_process(id: int):
 if __name__=="__main__":
     # print(get_lwlock())
     # print(get_pg_stat_activity())
-    terminate_process()
+    # terminate_process()
+    q, t = get_the_longest_query()
+    print(t)
+    print(is_above_avg(t))
