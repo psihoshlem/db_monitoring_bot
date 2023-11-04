@@ -1,1 +1,9 @@
-{"databases": ["test_db"], "admins": [946525674]}
+{
+    "databases": {
+        "test_db": {
+            "active_sessions": [],
+            "lwlock_sessions": []
+        }
+    },
+    "admins": []
+}

@@ -1,5 +1,7 @@
 import psycopg2
 import json
+import matplotlib.pyplot as plt
+import io
 
 from config import (
     db_name,
@@ -72,11 +74,9 @@ def terminate_process(id: int):
 
 
 def write_admin(id: int):
-    with open("data.json", "r") as file:
-        data = json.loads(file.read())
+    data = get_data_json
     data["admins"].append(id)
-    with open("data.json", "w") as file:
-        file.write(json.dumps(data))
+    write_data_json(data)
 
 
 def track_long_running_queries():
@@ -122,6 +122,36 @@ def terminate_long_running_queries():
         return pid, duration
         # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
+
+def get_data_json():
+    with open("data.json", "r") as file:
+        data = json.loads(file.read())
+    return data
+
+
+def write_data_json(data):
+    with open("data.json", "w") as file:
+        file.write(json.dumps(data))
+    
+
+def get_statistic_chart(db_name: str = "test_db"):
+    active_sessions = get_data_json()["databases"]["test_db"]["active_sessions"]
+    lwlock_sessions = get_data_json()["databases"]["test_db"]["lwlock_sessions"]
+    x = [i+1 for i in range(len(active_sessions))]
+    plt.plot(x, active_sessions)
+    plt.title("Активные сессии")
+
+    buf1 = io.BytesIO()
+    plt.savefig(buf1, format='png')
+    buf1.seek(0)
+
+    plt.plot(x, lwlock_sessions)
+    plt.title("Сессии lwlock")
+
+    buf2 = io.BytesIO()
+    plt.savefig(buf2, format='png')
+    buf2.seek(0)
+    return buf1, buf2
 
 
 if __name__=="__main__":

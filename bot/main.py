@@ -2,7 +2,8 @@ from config import BOT_TOKEN, ADMIN_PASSWORD
 import telebot
 from telebot import types
 from functions import write_admin
-import json
+
+from functions import get_data_json, get_statistic_chart
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -86,13 +87,16 @@ def show_logs(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('test_db'))
 def process_callback(call):
-    button_number = call.data
-    bot.send_message(call.message.chat.id, 'БД = {}'.format(button_number))
+    db_name = call.data
+    # bot.send_message(call.message.chat.id, 'БД = {}'.format(button_number))
+    buf1, buf2 = get_statistic_chart(db_name)
+    bot.send_photo(call.message.chat.id, photo=buf1, caption=db_name)
+    bot.send_photo(call.message.chat.id, photo=buf2, caption=db_name)
+
 
 
 def create_inline_keyboard():
-    with open("data.json", "r") as file:
-        dbs = json.loads(file.read())["databases"]
+    dbs = get_data_json()["databases"].keys()
     keyboard = types.InlineKeyboardMarkup()
     buttons = []
     for db in dbs:
