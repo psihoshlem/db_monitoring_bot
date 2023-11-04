@@ -80,19 +80,36 @@ def write_admin(id: int):
 
 
 def track_long_running_queries():
-    with conn.cursor() as cur:
-        cur.execute(
-            "SELECT pid, now() - pg_stat_activity.query_start AS " + 
-            "duration, query FROM pg_stat_activity WHERE state = 'active' " + 
-            "AND now() - pg_stat_activity.query_start > interval '10 seconds';"
+    long_running_queries = []
+
+    try:
+        conn = psycopg2.connect(
+            dbname=db_name,
+            user=db_user,
+            password=db_password,
+            host=db_host,
+            port=db_port
         )
-        results = []
-        long_running_queries = cur.fetchall()
-        for query_info in long_running_queries:
-            pid, duration, query = query_info
-            return pid, duration, query
-        else:
-            return 
+
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT pid, now() - pg_stat_activity.query_start AS " +
+                "duration, query FROM pg_stat_activity WHERE state = 'active' " +
+                "AND now() - pg_stat_activity.query_start > interval '10 seconds';"
+            )
+            query_info = cur.fetchall()
+            for pid, duration, query in query_info:
+                long_running_queries.append((pid, duration, query))
+    except Exception as e:
+        print(f"Ошибка: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+    return long_running_queries
+            # print(f"Длинный запрос с PID {pid} выполняется уже {duration}.")
+            # print(f"Запрос: {query}\n")
+
             # print(f"Длинный запрос с PID {pid} выполняется уже {duration}.")
             # print(f"Запрос: {query}\n")
 

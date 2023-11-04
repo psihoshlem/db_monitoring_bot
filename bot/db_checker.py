@@ -45,9 +45,9 @@ if __name__=="__main__":
         #         warning_long_query_message(id, time, query)
         long_query = track_long_running_queries()
         if long_query:
-            pid, duration, query  =  long_query
-            for id in admins_ids:
-                warning_long_query_message(id, duration, query)
-                print("aaaaaaaa нахуй")
+            for pid, duration, query in long_query:
+                for id in admins_ids:
+                    warning_long_query_message(id, duration, query)
+                    print("aaaaaaaa нахуй")
             # pid, duration, query
         sleep(10)
