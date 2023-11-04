@@ -20,7 +20,6 @@ conn = psycopg2.connect(
 )
 
 
-
 def get_active_sessions() -> int:
     with conn.cursor() as cur:
         cur.execute(

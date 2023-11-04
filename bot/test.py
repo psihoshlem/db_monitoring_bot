@@ -220,7 +220,7 @@ def test_function():
 
 # create_and_populate_table(create=True)
 # view_table_contents()
-check_active_session()
+# check_active_session()
 # provoke_delay_50_seconds()
 # terminate_long_running_queries()
 # check_active_session()
