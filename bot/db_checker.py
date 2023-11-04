@@ -2,7 +2,8 @@ from functions import (
     get_lwlock_count, 
     get_the_longest_query, 
     is_above_avg,
-    get_active_sessions
+    get_active_sessions,
+    track_long_running_queries
 )
 from time import sleep
 from main import warning_session_message, warning_long_query_message
@@ -26,16 +27,27 @@ def write_to_store(key: str, value: int) -> bool:
 if __name__=="__main__":
     with open("data.json", "r") as file:
         admins_ids = json.loads(file.read())["admins"]
+    i = 1
     while True:
-        active_sessions = get_active_sessions()
-        if write_to_store("active_sessions", active_sessions):
+        print(i)
+        i+=1
+        # active_sessions = get_active_sessions()
+        # if write_to_store("active_sessions", active_sessions):
+        #     for id in admins_ids:
+        #         warning_session_message(id, active_sessions)
+        # lwlock_count = get_lwlock_count()
+        # if write_to_store("lwlock_sessions", lwlock_count):
+        #     for id in admins_ids:
+        #         warning_session_message(id, lwlock_count)
+        # query, time = get_the_longest_query()
+        # if is_above_avg(time):
+        #     for id in admins_ids:
+        #         warning_long_query_message(id, time, query)
+        long_query = track_long_running_queries()
+        if long_query:
+            pid, duration, query  =  long_query
             for id in admins_ids:
-                warning_session_message(id, active_sessions)
-        lwlock_count = get_lwlock_count()
-        if write_to_store("lwlock_sessions", lwlock_count):
-            for id in admins_ids:
-                warning_session_message(id, lwlock_count)
-        query, time = get_the_longest_query()
-        if is_above_avg(time):
-            warning_long_query_message(id, time, query)
-        sleep(60)
+                warning_long_query_message(id, duration, query)
+                print("aaaaaaaa нахуй")
+            # pid, duration, query
+        sleep(10)

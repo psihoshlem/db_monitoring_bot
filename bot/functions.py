@@ -29,7 +29,6 @@ def get_active_sessions() -> int:
         return result[0][0]
 
 
-
 def get_lwlock_count() -> int:
     with conn.cursor() as cur:
         cur.execute(
@@ -64,7 +63,6 @@ def is_above_avg(exec_time: int):
     return exec_time > (sum_time/all_count)*1000
 
 
-
 def terminate_process(id: int):
     with conn.cursor() as cur:
         cur.execute(
@@ -80,10 +78,40 @@ def write_admin(id: int):
     with open("data.json", "w") as file:
         file.write(json.dumps(data))
 
+
+def track_long_running_queries():
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT pid, now() - pg_stat_activity.query_start AS " + 
+            "duration, query FROM pg_stat_activity WHERE state = 'active' " + 
+            "AND now() - pg_stat_activity.query_start > interval '10 seconds';"
+        )
+        results = []
+        long_running_queries = cur.fetchall()
+        for query_info in long_running_queries:
+            pid, duration, query = query_info
+            return pid, duration, query
+        else:
+            return 
+            # print(f"Длинный запрос с PID {pid} выполняется уже {duration}.")
+            # print(f"Запрос: {query}\n")
+
+
+def terminate_long_running_queries():
+    with conn.cursor() as cur:
+        cur.execute("SELECT pid, now() - pg_stat_activity.query_start AS duration FROM pg_stat_activity WHERE state = 'active' AND now() - pg_stat_activity.query_start > interval '10 seconds';")
+        long_running_queries = cur.fetchall()
+        pid, duration = long_running_queries[0]
+        return pid, duration
+        # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
+
+
+
 if __name__=="__main__":
     # print(get_lwlock())
     # print(get_pg_stat_activity())
     # terminate_process()
-    q, t = get_the_longest_query()
-    print(t)
-    print(is_above_avg(t))
+    # q, t = get_the_longest_query()
+    # print(t)
+    # print(is_above_avg(t))
+    track_long_running_queries()
