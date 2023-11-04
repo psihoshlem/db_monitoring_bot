@@ -8,6 +8,8 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
       POSTGRES_INITDB_ARGS: "--username=postgres"
+      POSTGRES_EXTRA_OPTS: -c pg_stat_statements.track=all
+
     ports:
       - "5432:5432"
     volumes:
