@@ -77,14 +77,20 @@ def check_login(message):
 
 
 def rebase_db(message):
-    print("DROP DATABASE")
-    bot.send_message(message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
+    # bot.send_message(message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
+    keyboard = create_inline_keyboard("show_bd_for_rebase")
+    bot.send_message(message.chat.id, 'Выберите db', reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
 def process_callback_button(call):
-    keyboard = create_inline_keyboard()
+    keyboard = create_inline_keyboard("show_bd_for_info")
     bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('rebase_db'))
+def process_callback_button(call):
+    bot.send_message(call.message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'fix_logs')
@@ -95,23 +101,24 @@ def show_logs(call):
             bot.send_message(call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", parse_mode="HTML")
     else:
         bot.send_message(call.message.chat.id, "✅ Все запросы остановлены")
-        # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('show_all_db'))
 def process_callback(call):
     db_name = call.data
-    # bot.send_message(call.message.chat.id, 'БД = {}'.format(button_number))
     buf1, buf2 = get_statistic_chart(db_name)
     bot.send_photo(call.message.chat.id, photo=buf1, caption=db_name)
     bot.send_photo(call.message.chat.id, photo=buf2, caption=db_name)
 
 
-def create_inline_keyboard():
+def create_inline_keyboard(key_value):
     dbs = get_data_json()["databases"].keys()
     keyboard = types.InlineKeyboardMarkup()
     buttons = []
-    callback = "show_all_db"
+    if key_value == "show_bd_for_info":
+        callback = "show_all_db"
+    else:
+        callback = "rebase_db"
     for db in dbs:
         btn = create_inline_button(db, callback)
         buttons.append(btn)
