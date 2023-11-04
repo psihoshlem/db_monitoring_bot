@@ -14,10 +14,11 @@ def clear_db():
     conn.close()
 
 def create_tables():
-    # clear_db()
+    clear_db()
     conn = sqlite3.connect('data.db')
     cur = conn.cursor()
     cur.execute("CREATE TABLE IF NOT EXISTS databases(name text);")
+    cur.execute("CREATE TABLE IF NOT EXISTS admins(id int);")
     for table_name in [
         "active_sessions", "lwlock_sessions", "bg_processess"
     ]:
@@ -72,6 +73,32 @@ def get_ten_last_records(table: str, db_name: str):
     rows = cur.fetchall()
     cur.close()
     return [row[0] for row in rows]
+
+def get_databases():
+    conn = sqlite3.connect('data.db')
+    cur = conn.cursor()
+    cur.execute(f"SELECT name FROM databases;")
+    rows = [row[0] for row in cur.fetchall()]
+    cur.close()
+    return rows
+
+
+def add_admin(id):
+    conn = sqlite3.connect('data.db')
+    cur = conn.cursor()
+    cur.execute(f"INSERT INTO admins VALUES ('{id}')")
+    conn.commit()
+    cur.close()
+
+
+def get_admins():
+    conn = sqlite3.connect('data.db')
+    cur = conn.cursor()
+    cur.execute(f"SELECT id FROM admins;")
+    rows = [row[0] for row in cur.fetchall()]
+    conn.commit()
+    cur.close()
+    return rows
 
 
 create_tables()

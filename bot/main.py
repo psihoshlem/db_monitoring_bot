@@ -4,9 +4,10 @@ import telebot
 from config import BOT_TOKEN, ADMIN_PASSWORD
 
 from functions import (
-    write_admin, terminate_long_running_queries,
-    get_data_json, get_statistic_chart
+    terminate_long_running_queries, get_statistic_chart,
+    get_lwlock_count, get_active_sessions
 )
+from data_funcs import get_databases, add_admin
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -78,7 +79,7 @@ def check_login(message):
         # bth3 = types.KeyboardButton("Спровоцировать ошибку")
         markup.add(btn1, btn2)
         bot.send_message(message.chat.id, 'Вход успешен', reply_markup=markup)
-        write_admin(message.chat.id)
+        add_admin(message.chat.id)
     else:
         sent = bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
         bot.register_next_step_handler(sent, check_login)
@@ -123,7 +124,14 @@ def process_callback(call):
     check_graf = telebot.types.InlineKeyboardButton('Графики', callback_data=f'check_graf-{db_name}')
     configuration = telebot.types.InlineKeyboardButton('Конфигурация', callback_data=f'configuration-{db_name}')
     keyboard = telebot.types.InlineKeyboardMarkup().add(check_graf, configuration)
-    bot.send_message(call.message.chat.id, f"<b>db:</b> {db_name}\n<b>Сессии lwlock:</b> ?\n<b>Активные сессии:</b> ?\n<b>Процент загруженности буфера: ?</b>",reply_markup=keyboard, parse_mode="HTML")
+    bot.send_message(
+        call.message.chat.id, 
+        f"<b>db:</b> {db_name}\n" +
+        f"<b>Сессии lwlock: </b> {get_lwlock_count()}\n" +
+        f"<b>Активные сессии:</b> {get_active_sessions()}\n" +
+        f"<b>Процент загруженности буфера: -</b>",
+        reply_markup=keyboard, parse_mode="HTML"
+    )
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('check_graf'))
@@ -168,7 +176,7 @@ def set_time_params(message):
     bot.send_message(message.chat.id, f'Выбранно время {message.text}')
 
 def create_inline_keyboard(key_value):
-    dbs = get_data_json()["databases"].keys()
+    dbs = get_databases()
     keyboard = types.InlineKeyboardMarkup()
     buttons = []
     if key_value == "show_bd_for_info":

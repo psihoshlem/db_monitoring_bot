@@ -73,12 +73,6 @@ def terminate_process(id: int):
         )
 
 
-def write_admin(id: int):
-    data = get_data_json()
-    data["admins"].append(id)
-    write_data_json(data)
-
-
 def track_long_running_queries():
     long_running_queries = []
 
@@ -182,16 +176,7 @@ def get_average_execution_time_and_reset_stats():
 #         # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
 
-def get_data_json():
-    with open("data.json", "r") as file:
-        data = json.loads(file.read())
-    return data
 
-
-def write_data_json(data):
-    with open("data.json", "w") as file:
-        file.write(json.dumps(data))
-    
 
 def get_statistic_chart(db_name: str = "test_db"):
     active_sessions = get_ten_last_records("active_sessions", db_name)
