@@ -78,6 +78,7 @@ def check_login(message):
 
 def rebase_db(message):
     print("DROP DATABASE")
+    bot.send_message(message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
     # Подключение к базе данных
     # conn = psycopg2.connect(
     #     dbname="название_базы_данных",
