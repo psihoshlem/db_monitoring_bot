@@ -1,4 +1,6 @@
 import psycopg2
+import json
+
 from config import (
     db_name,
     db_user,
@@ -14,6 +16,7 @@ conn = psycopg2.connect(
     host=db_host,
     port=db_port
 )
+
 
 
 def get_active_sessions() -> int:
@@ -69,6 +72,13 @@ def terminate_process(id: int):
             f" FROM pg_stat_activity WHERE pid = {id};"
         )
 
+
+def write_admin(id: int):
+    with open("data.json", "r") as file:
+        data = json.loads(file.read())
+    data["admins"].append(id)
+    with open("data.json", "w") as file:
+        file.write(json.dumps(data))
 
 if __name__=="__main__":
     # print(get_lwlock())

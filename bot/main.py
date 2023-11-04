@@ -1,6 +1,7 @@
-from config import BOT_TOKEN
+from config import BOT_TOKEN, ADMIN_PASSWORD
 import telebot
 from telebot import types
+from functions import write_admin
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -45,26 +46,23 @@ def button_for_auth(message):
     bot.register_next_step_handler(sent, check_login)
 
 
-def error_msg(id, number):
-    # check_logs = types.InlineKeyboardButton('Посмотреть логи', callback_data='check_logs')
-    # markup = types.InlineKeyboardMarkup().add(check_logs)
-    bot.send_message(message.chat.id, f'id = {id}\nnumber = {number}', reply_markup=markup)
+def warning_session_message(id, number):
+    bot.send_message(id, f'id = {id}\nnumber = {number}')
 
 
-def error_msg_second(id, number, query):
-    # check_logs = types.InlineKeyboardButton('Посмотреть логи', callback_data='check_logs')
-    # markup = types.InlineKeyboardMarkup().add(check_logs)
-    bot.send_message(message.chat.id, f'id = {id}\nnumber = {number}\nquery = {query}', reply_markup=markup)
+def warning_long_query_message(id, number, query):
+    bot.send_message(id, f'id = {id}\nnumber = {number}\nquery = {query}')
 
 
 def check_login(message):
-    if message.text == 'admin':
+    if message.text == ADMIN_PASSWORD:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Профиль")
         btn2 = types.KeyboardButton("Cписок команд")
         # bth3 = types.KeyboardButton("Спровоцировать ошибку")
         markup.add(btn1, btn2)
         bot.send_message(message.chat.id, 'Вход успешен', reply_markup=markup)
+        write_admin(message.chat.id)
     else:
         sent = bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
         bot.register_next_step_handler(sent, check_login)
@@ -102,5 +100,5 @@ def create_inline_keyboard(amount):
 def create_inline_button(text, data):
     return types.InlineKeyboardButton(text, callback_data=data)
 
-
-bot.infinity_polling(timeout=10, long_polling_timeout=5)
+if __name__=="__main__":
+    bot.infinity_polling(timeout=10, long_polling_timeout=5)
