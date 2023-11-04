@@ -142,6 +142,36 @@ def terminate_long_running_queries():
     return long_running_queries
 
 
+def get_average_execution_time_and_reset_stats():
+    average_execution_time_seconds=[]
+
+    try:
+        conn = psycopg2.connect(
+            dbname=db_name,
+            user=db_user,
+            password=db_password,
+            host=db_host,
+            port=db_port
+        )
+
+        with conn.cursor() as cur:
+            cur.execute("SELECT AVG(total_exec_time / 1000) AS average_execution_time_seconds FROM pg_stat_statements;")
+            result = cur.fetchone()
+            average_execution_time_seconds = result[0]
+
+            cur.execute("SELECT pg_stat_statements_reset();")
+            conn.commit()
+            if average_execution_time_seconds is not None:
+                formated_time = "{:.5f}".format(average_execution_time_seconds)
+                return formated_time
+
+
+    except Exception as e:
+        print(f"Ошибка: {e}")
+        return None
+
+
+
 
 # def terminate_long_running_queries():
 #     with conn.cursor() as cur:

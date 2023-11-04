@@ -4,8 +4,8 @@ import telebot
 from config import BOT_TOKEN, ADMIN_PASSWORD
 
 from functions import write_admin
-from functions import terminate_long_running_queries
 from functions import get_data_json, get_statistic_chart
+from functions import terminate_long_running_queries, get_average_execution_time_and_reset_stats
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -91,6 +91,8 @@ def process_callback_button(call):
 @bot.callback_query_handler(func=lambda call: call.data.startswith('rebase_db'))
 def process_callback_button(call):
     bot.send_message(call.message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
+    avarge_query_time = get_average_execution_time_and_reset_stats()
+    bot.send_message(call.message.chat.id, text=f"Средняя продолжительность запросов: \n{avarge_query_time} секунд", parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'fix_logs')
