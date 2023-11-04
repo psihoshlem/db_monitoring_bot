@@ -20,6 +20,8 @@ def func(message):
         button_for_auth(message)
     elif message.text == "Cписок команд":
         show_all_commands(message)
+    elif message.text == "Обновить БД":
+        rebase_db(message)
     # elif message.text == "Спровоцировать ошибку":
     #     error_msg(message)
     else:
@@ -63,7 +65,7 @@ def warning_long_query_message(id, pid, number, query):
 def check_login(message):
     if message.text == ADMIN_PASSWORD:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn1 = types.KeyboardButton("Профиль")
+        btn1 = types.KeyboardButton("Обновить БД")
         btn2 = types.KeyboardButton("Cписок команд")
         # bth3 = types.KeyboardButton("Спровоцировать ошибку")
         markup.add(btn1, btn2)
@@ -72,6 +74,39 @@ def check_login(message):
     else:
         sent = bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
         bot.register_next_step_handler(sent, check_login)
+
+
+def rebase_db(message):
+    print("DROP DATABASE")
+    # Подключение к базе данных
+    # conn = psycopg2.connect(
+    #     dbname="название_базы_данных",
+    #     user="имя_пользователя",
+    #     password="пароль",
+    #     host="хост",
+    #     port="порт"
+    # )
+    # Создание объекта курсора
+    # cur = conn.cursor()
+    # try:
+        # Остановка активных сеансов базы данных
+        # cur.execute("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'название_базы_данных';")
+        # conn.commit()
+        # Удаление и создание базы данных
+        # cur.execute("DROP DATABASE IF EXISTS название_базы_данных;")
+        # cur.execute("CREATE DATABASE название_базы_данных;")
+        # conn.commit()
+        # Восстановление базы данных из резервной копии
+    #     cur.execute("pg_restore --dbname=название_базы_данных --verbose путь_к_резервной_копии")
+    #     conn.commit()
+    # except (Exception, psycopg2.DatabaseError) as error:
+    #     print("Ошибка при восстановлении базы данных:", error)
+    # finally:
+        # Закрытие соединения и курсора
+        # if conn is not None:
+        #     conn.close()
+        # if cur is not None:
+        #     cur.close()
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
