@@ -167,13 +167,15 @@ def get_statistic_chart(db_name: str = "test_db"):
     active_sessions = get_data_json()["databases"]["test_db"]["active_sessions"]
     lwlock_sessions = get_data_json()["databases"]["test_db"]["lwlock_sessions"]
     x = [i+1 for i in range(len(active_sessions))]
+    plt.figure()
     plt.plot(x, active_sessions)
     plt.title("Активные сессии")
 
     buf1 = io.BytesIO()
     plt.savefig(buf1, format='png')
     buf1.seek(0)
-
+    
+    plt.figure()
     plt.plot(x, lwlock_sessions)
     plt.title("Сессии lwlock")
 

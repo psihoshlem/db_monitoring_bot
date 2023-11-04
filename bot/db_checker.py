@@ -33,10 +33,7 @@ def write_to_store(key: str, value: int) -> bool:
 if __name__=="__main__":
     with open("data.json", "r") as file:
         admins_ids = json.loads(file.read())["admins"]
-    i = 0
     while True:
-        print(i)
-
         active_sessions = get_active_sessions()
         if write_to_store("active_sessions", active_sessions):
             for id in admins_ids:
@@ -50,7 +47,6 @@ if __name__=="__main__":
         #     for id in admins_ids:
         #         warning_long_query_message(id, pid, time, query)
         long_query = track_long_running_queries()
-        print(long_query)
         if long_query:
             for pid, duration, query in long_query:
                 for id in admins_ids:
