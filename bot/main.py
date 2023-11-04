@@ -1,6 +1,8 @@
-from config import BOT_TOKEN
+from config import BOT_TOKEN, ADMIN_PASSWORD
 import telebot
 from telebot import types
+from functions import write_admin
+import json
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -45,26 +47,27 @@ def button_for_auth(message):
     bot.register_next_step_handler(sent, check_login)
 
 
-def error_msg(id, number):
-    # check_logs = types.InlineKeyboardButton('Посмотреть логи', callback_data='check_logs')
-    # markup = types.InlineKeyboardMarkup().add(check_logs)
-    bot.send_message(message.chat.id, f'id = {id}\nnumber = {number}', reply_markup=markup)
+def warning_session_message(id, number):
+    fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
+    keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
+    bot.send_message(id, 'Чиним БД')
 
 
-def error_msg_second(id, number, query):
-    # check_logs = types.InlineKeyboardButton('Посмотреть логи', callback_data='check_logs')
-    # markup = types.InlineKeyboardMarkup().add(check_logs)
-    bot.send_message(message.chat.id, f'id = {id}\nnumber = {number}\nquery = {query}', reply_markup=markup)
+def warning_long_query_message(id, number, query):
+    fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
+    keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
+    bot.send_message(id, 'Чиним БД')
 
 
 def check_login(message):
-    if message.text == 'admin':
+    if message.text == ADMIN_PASSWORD:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Профиль")
         btn2 = types.KeyboardButton("Cписок команд")
         # bth3 = types.KeyboardButton("Спровоцировать ошибку")
         markup.add(btn1, btn2)
         bot.send_message(message.chat.id, 'Вход успешен', reply_markup=markup)
+        write_admin(message.chat.id)
     else:
         sent = bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
         bot.register_next_step_handler(sent, check_login)
@@ -72,35 +75,34 @@ def check_login(message):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
 def process_callback_button(call):
-    keyboard = create_inline_keyboard(5)
+    keyboard = create_inline_keyboard()
     bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'check_logs')
+@bot.callback_query_handler(func=lambda call: call.data == 'fix_logs')
 def show_logs(call):
-    bot.send_message(call.message.chat.id, 'logs: накрылось чета-чета')
+    bot.send_message(call.message.chat.id, 'Чиним БД')
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('button_'))
+@bot.callback_query_handler(func=lambda call: call.data.startswith('test_db'))
 def process_callback(call):
-    button_number = call.data.split('_')[1]
+    button_number = call.data
     bot.send_message(call.message.chat.id, 'БД = {}'.format(button_number))
 
 
-def create_inline_keyboard(amount):
+def create_inline_keyboard():
+    with open("data.json", "r") as file:
+        dbs = json.loads(file.read())["databases"]
     keyboard = types.InlineKeyboardMarkup()
     buttons = []
-    for i in range(amount):
-        button_number = i + 1
-        button_text = f'Button {button_number}'
-        button_data = f'button_{button_number}'
-        button = create_inline_button(button_text, button_data)
-        buttons.append(button)
+    for db in dbs:
+        btn = create_inline_button(db, db)
+        buttons.append(btn)
     keyboard.add(*buttons)
     return keyboard
 
 def create_inline_button(text, data):
     return types.InlineKeyboardButton(text, callback_data=data)
 
-
-bot.infinity_polling(timeout=10, long_polling_timeout=5)
+if __name__=="__main__":
+    bot.infinity_polling(timeout=10, long_polling_timeout=5)
