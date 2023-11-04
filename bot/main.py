@@ -3,6 +3,7 @@ import telebot
 from telebot import types
 from functions import write_admin
 import json
+from functions import terminate_long_running_queries
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -53,10 +54,10 @@ def warning_session_message(id, number):
     bot.send_message(id, f'Чиним БД {number}', reply_markup=keyboard)
 
 
-def warning_long_query_message(id, number, query):
-    fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
+def warning_long_query_message(id, pid, number, query):
+    fix_button = telebot.types.InlineKeyboardButton('🔧 Устранить', callback_data='fix_logs')
     keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
-    bot.send_message(id, f'Чиним БД {number}\n{query}', reply_markup=keyboard)
+    bot.send_message(id, f'⚠️ <b>Выполняется слишком долгий запрос:</b>\n<b>PID: </b>{pid}\n<b>Время запроса: </b>{number}\n<b>Имя запроса:</b>{query}', reply_markup=keyboard, parse_mode="HTML")
 
 
 def check_login(message):
@@ -81,7 +82,13 @@ def process_callback_button(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'fix_logs')
 def show_logs(call):
-    bot.send_message(call.message.chat.id, 'Чиним БД')
+    long_query = terminate_long_running_queries()
+    if long_query:
+        for pid, duration in long_query:
+            bot.send_message(call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", parse_mode="HTML")
+    else:
+        bot.send_message(call.message.chat.id, "✅ Все запросы остановлены")
+        # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('test_db'))
