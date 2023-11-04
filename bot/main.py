@@ -123,6 +123,38 @@ def process_callback_button(call):
     bot.send_photo(call.message.chat.id, photo=buf2, caption=db_name)
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith('configuration'))
+def process_callback_button(call):
+    buttons = [
+        types.InlineKeyboardButton('Время для сессий lwlock', callback_data='set_time-lwlock'),
+        types.InlineKeyboardButton('Время для активных сессий', callback_data='set_time-activate'),
+        types.InlineKeyboardButton('Время для процента загруженности буфера', callback_data='set_time-bufer')
+    ]
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    for button in buttons:
+        keyboard.add(button)
+    bot.send_message(call.message.chat.id, 'Установите время для метрик', reply_markup=keyboard)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('set_time'))
+def process_callback_button(call):
+    callback_data = call.data
+    conf_param = callback_data.split('-')[1]
+    if conf_param == "lwlock":
+        sent = bot.send_message(call.message.chat.id, 'Введите время для сессий lwlock')
+        output_msg = "lwlock"
+    elif conf_param == "activate":
+        sent = bot.send_message(call.message.chat.id, 'Введите время для активных сессий')
+        output_msg = "activate"
+    elif conf_param == "bufer":
+        sent = bot.send_message(call.message.chat.id, 'Введите время для процента загруженности буфера')
+        output_msg = "bufer"
+    bot.register_next_step_handler(sent, set_time_params)
+
+
+def set_time_params(message):
+    bot.send_message(message.chat.id, f'Выбранно время {message.text}')
+
 def create_inline_keyboard(key_value):
     dbs = get_data_json()["databases"].keys()
     keyboard = types.InlineKeyboardMarkup()
