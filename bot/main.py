@@ -1,9 +1,10 @@
-from config import BOT_TOKEN, ADMIN_PASSWORD
-import telebot
 from telebot import types
+import telebot
+
+from config import BOT_TOKEN, ADMIN_PASSWORD
+
 from functions import write_admin
 from functions import terminate_long_running_queries
-
 from functions import get_data_json, get_statistic_chart
 
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -23,8 +24,6 @@ def func(message):
         show_all_commands(message)
     elif message.text == "Обновить БД":
         rebase_db(message)
-    # elif message.text == "Спровоцировать ошибку":
-    #     error_msg(message)
     else:
         bot.send_message(message.chat.id, text="На такую команду я не запрограммирован...")
 
@@ -80,35 +79,6 @@ def check_login(message):
 def rebase_db(message):
     print("DROP DATABASE")
     bot.send_message(message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
-    # Подключение к базе данных
-    # conn = psycopg2.connect(
-    #     dbname="название_базы_данных",
-    #     user="имя_пользователя",
-    #     password="пароль",
-    #     host="хост",
-    #     port="порт"
-    # )
-    # Создание объекта курсора
-    # cur = conn.cursor()
-    # try:
-        # Остановка активных сеансов базы данных
-        # cur.execute("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'название_базы_данных';")
-        # conn.commit()
-        # Удаление и создание базы данных
-        # cur.execute("DROP DATABASE IF EXISTS название_базы_данных;")
-        # cur.execute("CREATE DATABASE название_базы_данных;")
-        # conn.commit()
-        # Восстановление базы данных из резервной копии
-    #     cur.execute("pg_restore --dbname=название_базы_данных --verbose путь_к_резервной_копии")
-    #     conn.commit()
-    # except (Exception, psycopg2.DatabaseError) as error:
-    #     print("Ошибка при восстановлении базы данных:", error)
-    # finally:
-        # Закрытие соединения и курсора
-        # if conn is not None:
-        #     conn.close()
-        # if cur is not None:
-        #     cur.close()
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
@@ -128,7 +98,7 @@ def show_logs(call):
         # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('test_db'))
+@bot.callback_query_handler(func=lambda call: call.data.startswith('show_all_db'))
 def process_callback(call):
     db_name = call.data
     # bot.send_message(call.message.chat.id, 'БД = {}'.format(button_number))
@@ -137,20 +107,22 @@ def process_callback(call):
     bot.send_photo(call.message.chat.id, photo=buf2, caption=db_name)
 
 
-
 def create_inline_keyboard():
     dbs = get_data_json()["databases"].keys()
     keyboard = types.InlineKeyboardMarkup()
     buttons = []
+    callback = "show_all_db"
     for db in dbs:
-        btn = create_inline_button(db, db)
+        btn = create_inline_button(db, callback)
         buttons.append(btn)
     for button in buttons:
         keyboard.row(button)
     return keyboard
 
+
 def create_inline_button(text, data):
     return types.InlineKeyboardButton(text, callback_data=data)
+
 
 if __name__=="__main__":
     bot.infinity_polling(timeout=10, long_polling_timeout=5)

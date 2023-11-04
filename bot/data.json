@@ -3,6 +3,10 @@
         "test_db": {
             "active_sessions": [],
             "lwlock_sessions": []
+        },
+        "test_db_second": {
+            "active_sessions": [],
+            "lwlock_sessions": []
         }
     },
     "admins": []
