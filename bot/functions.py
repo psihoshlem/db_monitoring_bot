@@ -2,7 +2,7 @@ import psycopg2
 import json
 import matplotlib.pyplot as plt
 import io
-
+from data_funcs import get_ten_last_records
 from config import (
     db_name,
     db_user,
@@ -194,8 +194,9 @@ def write_data_json(data):
     
 
 def get_statistic_chart(db_name: str = "test_db"):
-    active_sessions = get_data_json()["databases"]["test_db"]["active_sessions"]
-    lwlock_sessions = get_data_json()["databases"]["test_db"]["lwlock_sessions"]
+    active_sessions = get_ten_last_records("active_sessions", db_name)
+    lwlock_sessions = get_ten_last_records("lwlock_sessions", db_name)
+    print(active_sessions, lwlock_sessions)
     x = [i+1 for i in range(len(active_sessions))]
     plt.figure()
     plt.plot(x, active_sessions)

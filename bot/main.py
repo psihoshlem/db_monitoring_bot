@@ -3,9 +3,10 @@ import telebot
 
 from config import BOT_TOKEN, ADMIN_PASSWORD
 
-from functions import write_admin
-from functions import get_data_json, get_statistic_chart
-from functions import terminate_long_running_queries, get_average_execution_time_and_reset_stats
+from functions import (
+    write_admin, terminate_long_running_queries,
+    get_data_json, get_statistic_chart
+)
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -13,7 +14,11 @@ const_for_send_msg = True
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.send_message(message.chat.id, text="Привет, <b>{0.first_name}</b>!".format(message.from_user), reply_markup=button_for_start(), parse_mode="HTML")
+    bot.send_message(
+        message.chat.id,
+        text="Привет, <b>{0.first_name}</b>!".format(message.from_user),
+        reply_markup=button_for_start(), parse_mode="HTML"
+    )
 
 
 @bot.message_handler(content_types=['text'])
@@ -58,7 +63,11 @@ def warning_session_message(id, number):
 def warning_long_query_message(id, pid, number, query):
     fix_button = telebot.types.InlineKeyboardButton('🔧 Устранить', callback_data='fix_logs')
     keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
-    bot.send_message(id, f'⚠️ <b>Выполняется слишком долгий запрос:</b>\n<b>PID: </b>{pid}\n<b>Время запроса: </b>{number}\n<b>Имя запроса:</b>{query}', reply_markup=keyboard, parse_mode="HTML")
+    bot.send_message(
+        id,
+        f'⚠️ <b>Выполняется слишком долгий запрос:</b>\n<b>PID: </b>{pid}\n<b>Время запроса: </b>{number}\n<b>Имя запроса:</b>{query}', 
+        reply_markup=keyboard, parse_mode="HTML"
+    )
 
 
 def check_login(message):
@@ -99,7 +108,10 @@ def show_logs(call):
     long_query = terminate_long_running_queries()
     if long_query:
         for pid, duration in long_query:
-            bot.send_message(call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", parse_mode="HTML")
+            bot.send_message(
+                call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", 
+                parse_mode="HTML"
+            )
     else:
         bot.send_message(call.message.chat.id, "✅ Все запросы остановлены")
 
