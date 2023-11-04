@@ -2,6 +2,7 @@ from config import BOT_TOKEN, ADMIN_PASSWORD
 import telebot
 from telebot import types
 from functions import write_admin
+import json
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -70,7 +71,7 @@ def check_login(message):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
 def process_callback_button(call):
-    keyboard = create_inline_keyboard(5)
+    keyboard = create_inline_keyboard()
     bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
 
 
@@ -85,15 +86,14 @@ def process_callback(call):
     bot.send_message(call.message.chat.id, 'БД = {}'.format(button_number))
 
 
-def create_inline_keyboard(amount):
+def create_inline_keyboard():
+    with open("data.json", "r") as file:
+        dbs = json.loads(file.read())["databases"]
     keyboard = types.InlineKeyboardMarkup()
     buttons = []
-    for i in range(amount):
-        button_number = i + 1
-        button_text = f'Button {button_number}'
-        button_data = f'button_{button_number}'
-        button = create_inline_button(button_text, button_data)
-        buttons.append(button)
+    for db in dbs:
+        btn = create_inline_button(db, db)
+        buttons.append(btn)
     keyboard.add(*buttons)
     return keyboard
 
