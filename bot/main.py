@@ -48,11 +48,15 @@ def button_for_auth(message):
 
 
 def warning_session_message(id, number):
-    bot.send_message(id, f'id = {id}\nnumber = {number}')
+    fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
+    keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
+    bot.send_message(id, 'Чиним БД')
 
 
 def warning_long_query_message(id, number, query):
-    bot.send_message(id, f'id = {id}\nnumber = {number}\nquery = {query}')
+    fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
+    keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
+    bot.send_message(id, 'Чиним БД')
 
 
 def check_login(message):
@@ -75,14 +79,14 @@ def process_callback_button(call):
     bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
 
 
-@bot.callback_query_handler(func=lambda call: call.data == 'check_logs')
+@bot.callback_query_handler(func=lambda call: call.data == 'fix_logs')
 def show_logs(call):
-    bot.send_message(call.message.chat.id, 'logs: накрылось чета-чета')
+    bot.send_message(call.message.chat.id, 'Чиним БД')
 
 
-@bot.callback_query_handler(func=lambda call: call.data.startswith('button_'))
+@bot.callback_query_handler(func=lambda call: call.data.startswith('test_db'))
 def process_callback(call):
-    button_number = call.data.split('_')[1]
+    button_number = call.data
     bot.send_message(call.message.chat.id, 'БД = {}'.format(button_number))
 
 
