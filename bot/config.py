@@ -1,6 +1,7 @@
 BOT_TOKEN = "YOUR TOKEN"
 
 ADMIN_PASSWORD = "admin"
+DB_NAMES = ['test_db']
 
 db_name = "test_db"
 db_user = "postgres"
