@@ -1,6 +1,8 @@
 import subprocess
 
-def backup_and_restart_postgresql(container_name, database_name):
+
+def backup_and_restart_postgresql(database_name):
+    container_name = "db_monitoring_bot-db-1"
     try:
         stop_command = f"docker stop {container_name}"
         subprocess.run(stop_command, shell=True)
@@ -14,10 +16,9 @@ def backup_and_restart_postgresql(container_name, database_name):
         restore_command = f"docker exec -i {container_name} psql -U postgres {database_name} < backup.sql"
         subprocess.run(restore_command, shell=True)
 
-        print("База данных успешно выключена, скопирована и включена.")
+        return database_name
     except Exception as e:
-        print(f"Произошла ошибка: {e}")
+        return(f"Произошла ошибка: {e}")
 
-container_name = "db_monitoring_bot-db-1"
-database_name = "test_db"
-backup_and_restart_postgresql(container_name, database_name)
+
+# backup_and_restart_postgresql(database_name)

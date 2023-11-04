@@ -6,6 +6,9 @@ from config import BOT_TOKEN, ADMIN_PASSWORD
 from functions import write_admin
 from functions import get_data_json, get_statistic_chart
 from functions import terminate_long_running_queries, get_average_execution_time_and_reset_stats
+from shutdown_db import stop_postgresql_with_backup
+from start_db import start_postgresql_with_restore
+from restart_db import backup_and_restart_postgresql
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -53,7 +56,7 @@ def check_login(message):
     if message.text == ADMIN_PASSWORD:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Выключить БД")
-        btn2 = types.KeyboardButton("Обновить БД")
+        btn2 = types.KeyboardButton("Перезагрузить БД")
         btn3 = types.KeyboardButton("Включить БД")
         btn4 = types.KeyboardButton("Cписок команд")
         markup.add(btn1, btn2, btn3, btn4)
@@ -66,17 +69,17 @@ def check_login(message):
 
 def rebase_db(message):
     keyboard = create_inline_keyboard("show_bd_for_rebase")
-    bot.send_message(message.chat.id, 'Выберите db', reply_markup=keyboard)
+    bot.send_message(message.chat.id, 'Какую БД будем перезагружать?', reply_markup=keyboard)
 
 
 def off_db(message):
     keyboard = create_inline_keyboard("show_bd_for_off")
-    bot.send_message(message.chat.id, 'Выберите db', reply_markup=keyboard)
+    bot.send_message(message.chat.id, 'Какую БД будем выключать?', reply_markup=keyboard)
 
 
 def on_db(message):
     keyboard = create_inline_keyboard("show_bd_for_on")
-    bot.send_message(message.chat.id, 'Выберите db', reply_markup=keyboard)
+    bot.send_message(message.chat.id, 'Какую БД будем включать?', reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
@@ -84,13 +87,6 @@ def process_callback_button(call):
     keyboard = create_inline_keyboard("show_bd_for_info")
     bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
 
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith('rebase_db'))
-def process_callback_button(call):
-    callback_data = call.data
-    db_name = callback_data.split('-')[1]
-    avarge_query_time = get_average_execution_time_and_reset_stats()
-    bot.send_message(call.message.chat.id, text=f"Средняя продолжительность запросов: \n{avarge_query_time} секунд", parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('avg_time'))
@@ -130,20 +126,32 @@ def process_callback_button(call):
     bot.send_photo(call.message.chat.id, photo=buf2, caption=db_name)
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith('rebase_db'))
+def process_callback_button(call):
+    callback_data = call.data
+    db_name = callback_data.split('-')[1]
+
+    restart_bd_message = backup_and_restart_postgresql(db_name)
+    bot.send_message(call.message.chat.id, text=f"База данных <b>{restart_bd_message}</b> успешно выключена, скопирована и включена", parse_mode="HTML")
+
+
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith('off_db'))
 def process_callback_button(call):
     callback_data = call.data
     db_name = callback_data.split('-')[1]
-    bot.send_message(call.message.chat.id, f'STOP DATABASE {db_name}')
-    # импорт функции для выключения бд
+
+    stop_bd_message = stop_postgresql_with_backup(db_name)
+    bot.send_message(call.message.chat.id, text=f"База данных <b>{stop_bd_message}</b> успешно выключена и данные сохранены.", parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('on_db'))
 def process_callback_button(call):
     callback_data = call.data
     db_name = callback_data.split('-')[1]
-    bot.send_message(call.message.chat.id, f'GO DATABASE {db_name}')
-    # импорт функции для включения бд
+
+    start_bd_message = start_postgresql_with_restore(db_name)
+    bot.send_message(call.message.chat.id, text=f"База данных {start_bd_message} успешно включена с восстановлением данных.", parse_mode="HTML")
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('configuration'))
