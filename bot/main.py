@@ -50,13 +50,13 @@ def button_for_auth(message):
 def warning_session_message(id, number):
     fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
     keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
-    bot.send_message(id, f'Чиним БД {number}')
+    bot.send_message(id, f'Чиним БД {number}', reply_markup=keyboard)
 
 
 def warning_long_query_message(id, number, query):
     fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
     keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
-    bot.send_message(id, f'Чиним БД {number}\n{query}')
+    bot.send_message(id, f'Чиним БД {number}\n{query}', reply_markup=keyboard)
 
 
 def check_login(message):
