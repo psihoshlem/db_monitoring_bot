@@ -30,8 +30,7 @@ def func(message):
 
 def show_all_commands(message):
     button = telebot.types.InlineKeyboardButton('Показать все БД', callback_data='my_button')
-    button2 = telebot.types.InlineKeyboardButton('Логи последней ошибки', callback_data='my_button')
-    keyboard = telebot.types.InlineKeyboardMarkup().add(button, button2)
+    keyboard = telebot.types.InlineKeyboardMarkup().add(button)
     bot.send_message(message.chat.id, 'Cписок команд', reply_markup=keyboard)
 
 
@@ -77,7 +76,6 @@ def check_login(message):
 
 
 def rebase_db(message):
-    # bot.send_message(message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
     keyboard = create_inline_keyboard("show_bd_for_rebase")
     bot.send_message(message.chat.id, 'Выберите db', reply_markup=keyboard)
 
@@ -90,7 +88,8 @@ def process_callback_button(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('rebase_db'))
 def process_callback_button(call):
-    bot.send_message(call.message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
+    callback_data = call.data
+    db_name = callback_data.split('-')[1]
     avarge_query_time = get_average_execution_time_and_reset_stats()
     bot.send_message(call.message.chat.id, text=f"Средняя продолжительность запросов: \n{avarge_query_time} секунд", parse_mode="HTML")
 
@@ -107,7 +106,18 @@ def show_logs(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('show_all_db'))
 def process_callback(call):
-    db_name = call.data
+    callback_data = call.data
+    db_name = callback_data.split('-')[1]
+    check_graf = telebot.types.InlineKeyboardButton('Графики', callback_data=f'check_graf-{db_name}')
+    configuration = telebot.types.InlineKeyboardButton('Конфигурация', callback_data=f'configuration-{db_name}')
+    keyboard = telebot.types.InlineKeyboardMarkup().add(check_graf, configuration)
+    bot.send_message(call.message.chat.id, f"<b>db:</b> {db_name}\n<b>Сессии lwlock:</b> ?\n<b>Активные сессии:</b> ?\n<b>Процент загруженности буфера: ?</b>",reply_markup=keyboard, parse_mode="HTML")
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('check_graf'))
+def process_callback_button(call):
+    callback_data = call.data
+    db_name = callback_data.split('-')[1]
     buf1, buf2 = get_statistic_chart(db_name)
     bot.send_photo(call.message.chat.id, photo=buf1, caption=db_name)
     bot.send_photo(call.message.chat.id, photo=buf2, caption=db_name)
@@ -122,7 +132,8 @@ def create_inline_keyboard(key_value):
     else:
         callback = "rebase_db"
     for db in dbs:
-        btn = create_inline_button(db, callback)
+        callback_data = f"{callback}-{db}"
+        btn = create_inline_button(db, callback_data)
         buttons.append(btn)
     for button in buttons:
         keyboard.row(button)
