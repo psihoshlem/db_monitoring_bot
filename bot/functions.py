@@ -107,20 +107,45 @@ def track_long_running_queries():
             conn.close()
 
     return long_running_queries
-            # print(f"Длинный запрос с PID {pid} выполняется уже {duration}.")
-            # print(f"Запрос: {query}\n")
-
-            # print(f"Длинный запрос с PID {pid} выполняется уже {duration}.")
-            # print(f"Запрос: {query}\n")
 
 
 def terminate_long_running_queries():
-    with conn.cursor() as cur:
-        cur.execute("SELECT pid, now() - pg_stat_activity.query_start AS duration FROM pg_stat_activity WHERE state = 'active' AND now() - pg_stat_activity.query_start > interval '10 seconds';")
-        long_running_queries = cur.fetchall()
-        pid, duration = long_running_queries[0]
-        return pid, duration
-        # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
+    long_running_queries = []
+
+    try:
+        conn = psycopg2.connect(
+            dbname=db_name,
+            user=db_user,
+            password=db_password,
+            host=db_host,
+            port=db_port
+        )
+
+        with conn.cursor() as cur:
+            cur.execute("SELECT pid, now() - pg_stat_activity.query_start AS duration FROM pg_stat_activity WHERE state = 'active' AND now() - pg_stat_activity.query_start > interval '10 seconds';")
+            long_running_queries = cur.fetchall()
+            for pid, duration in long_running_queries:
+                # print(f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.")
+                cur.execute(f"SELECT pg_terminate_backend({pid});")
+                conn.commit()
+                # print(f"Запрос с PID {pid} прерван.")
+    except Exception as e:
+        print(f"Ошибка: {e}")
+    finally:
+        if conn:
+            conn.close()
+
+    return long_running_queries
+
+
+
+# def terminate_long_running_queries():
+#     with conn.cursor() as cur:
+#         cur.execute("SELECT pid, now() - pg_stat_activity.query_start AS duration FROM pg_stat_activity WHERE state = 'active' AND now() - pg_stat_activity.query_start > interval '10 seconds';")
+#         long_running_queries = cur.fetchall()
+#         pid, duration = long_running_queries[0]
+#         return pid, duration
+#         # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
 
 def get_data_json():

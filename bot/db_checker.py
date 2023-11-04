@@ -50,6 +50,6 @@ if __name__=="__main__":
         if long_query:
             for pid, duration, query in long_query:
                 for id in admins_ids:
-                    warning_long_query_message(id, duration, query)
+                    warning_long_query_message(id, pid,duration, query)
             # pid, duration, query
         sleep(10)

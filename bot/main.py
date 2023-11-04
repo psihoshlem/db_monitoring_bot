@@ -2,6 +2,7 @@ from config import BOT_TOKEN, ADMIN_PASSWORD
 import telebot
 from telebot import types
 from functions import write_admin
+from functions import terminate_long_running_queries
 
 from functions import get_data_json, get_statistic_chart
 
@@ -20,6 +21,8 @@ def func(message):
         button_for_auth(message)
     elif message.text == "Cписок команд":
         show_all_commands(message)
+    elif message.text == "Обновить БД":
+        rebase_db(message)
     # elif message.text == "Спровоцировать ошибку":
     #     error_msg(message)
     else:
@@ -54,16 +57,16 @@ def warning_session_message(id, number):
     bot.send_message(id, f'Чиним БД {number}', reply_markup=keyboard)
 
 
-def warning_long_query_message(id, number, query):
-    fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
+def warning_long_query_message(id, pid, number, query):
+    fix_button = telebot.types.InlineKeyboardButton('🔧 Устранить', callback_data='fix_logs')
     keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
-    bot.send_message(id, f'Чиним БД {number}\n{query}', reply_markup=keyboard)
+    bot.send_message(id, f'⚠️ <b>Выполняется слишком долгий запрос:</b>\n<b>PID: </b>{pid}\n<b>Время запроса: </b>{number}\n<b>Имя запроса:</b>{query}', reply_markup=keyboard, parse_mode="HTML")
 
 
 def check_login(message):
     if message.text == ADMIN_PASSWORD:
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        btn1 = types.KeyboardButton("Профиль")
+        btn1 = types.KeyboardButton("Обновить БД")
         btn2 = types.KeyboardButton("Cписок команд")
         # bth3 = types.KeyboardButton("Спровоцировать ошибку")
         markup.add(btn1, btn2)
@@ -74,6 +77,40 @@ def check_login(message):
         bot.register_next_step_handler(sent, check_login)
 
 
+def rebase_db(message):
+    print("DROP DATABASE")
+    bot.send_message(message.chat.id, text="<b>DROP DATABASE</b>", parse_mode="HTML")
+    # Подключение к базе данных
+    # conn = psycopg2.connect(
+    #     dbname="название_базы_данных",
+    #     user="имя_пользователя",
+    #     password="пароль",
+    #     host="хост",
+    #     port="порт"
+    # )
+    # Создание объекта курсора
+    # cur = conn.cursor()
+    # try:
+        # Остановка активных сеансов базы данных
+        # cur.execute("SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'название_базы_данных';")
+        # conn.commit()
+        # Удаление и создание базы данных
+        # cur.execute("DROP DATABASE IF EXISTS название_базы_данных;")
+        # cur.execute("CREATE DATABASE название_базы_данных;")
+        # conn.commit()
+        # Восстановление базы данных из резервной копии
+    #     cur.execute("pg_restore --dbname=название_базы_данных --verbose путь_к_резервной_копии")
+    #     conn.commit()
+    # except (Exception, psycopg2.DatabaseError) as error:
+    #     print("Ошибка при восстановлении базы данных:", error)
+    # finally:
+        # Закрытие соединения и курсора
+        # if conn is not None:
+        #     conn.close()
+        # if cur is not None:
+        #     cur.close()
+
+
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
 def process_callback_button(call):
     keyboard = create_inline_keyboard()
@@ -82,7 +119,13 @@ def process_callback_button(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'fix_logs')
 def show_logs(call):
-    bot.send_message(call.message.chat.id, 'Чиним БД')
+    long_query = terminate_long_running_queries()
+    if long_query:
+        for pid, duration in long_query:
+            bot.send_message(call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", parse_mode="HTML")
+    else:
+        bot.send_message(call.message.chat.id, "✅ Все запросы остановлены")
+        # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('test_db'))
