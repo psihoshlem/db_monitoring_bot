@@ -74,7 +74,7 @@ def terminate_process(id: int):
 
 
 def write_admin(id: int):
-    data = get_data_json
+    data = get_data_json()
     data["admins"].append(id)
     write_data_json(data)
 
@@ -122,7 +122,11 @@ def terminate_long_running_queries():
         )
 
         with conn.cursor() as cur:
-            cur.execute("SELECT pid, now() - pg_stat_activity.query_start AS duration FROM pg_stat_activity WHERE state = 'active' AND now() - pg_stat_activity.query_start > interval '10 seconds';")
+            cur.execute(
+                "SELECT pid, now() - pg_stat_activity.query_start AS duration "
+                + "FROM pg_stat_activity WHERE state = 'active' AND now() - "
+                + "pg_stat_activity.query_start > interval '10 seconds';"
+            )
             long_running_queries = cur.fetchall()
             for pid, duration in long_running_queries:
                 # print(f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.")
