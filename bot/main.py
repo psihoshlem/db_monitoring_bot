@@ -94,6 +94,12 @@ def process_callback_button(call):
     bot.send_message(call.message.chat.id, text=f"Средняя продолжительность запросов: \n{avarge_query_time} секунд", parse_mode="HTML")
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith('avg_time'))
+def process_callback_button(call):
+    avarge_query_time = get_average_execution_time_and_reset_stats()
+    bot.send_message(call.message.chat.id, text=f"Средняя продолжительность запросов: \n{avarge_query_time} секунд", parse_mode="HTML")
+
+
 @bot.callback_query_handler(func=lambda call: call.data == 'fix_logs')
 def show_logs(call):
     long_query = terminate_long_running_queries()
@@ -110,7 +116,9 @@ def process_callback(call):
     db_name = callback_data.split('-')[1]
     check_graf = telebot.types.InlineKeyboardButton('Графики', callback_data=f'check_graf-{db_name}')
     configuration = telebot.types.InlineKeyboardButton('Конфигурация', callback_data=f'configuration-{db_name}')
+    avg_time = telebot.types.InlineKeyboardButton('Средняя продолжительность', callback_data=f'avg_time')
     keyboard = telebot.types.InlineKeyboardMarkup().add(check_graf, configuration)
+    keyboard.row(avg_time)
     bot.send_message(call.message.chat.id, f"<b>db:</b> {db_name}\n<b>Сессии lwlock:</b> ?\n<b>Активные сессии:</b> ?\n<b>Процент загруженности буфера: ?</b>",reply_markup=keyboard, parse_mode="HTML")
 
 
