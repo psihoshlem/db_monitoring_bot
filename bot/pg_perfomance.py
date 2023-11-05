@@ -1,42 +1,33 @@
 import psycopg2
 
-def get_average_execution_time_and_reset_stats():
+def get_buffer_usage_percent():
+    database_name = "test_db"
+    user = "postgres"
+    password = "1234"
+    host = "localhost"
+    port = "5432"
+
     conn = psycopg2.connect(
-        dbname="test_db",
-        user="postgres",
-        password="1234",
-        host="localhost",
-        port="5432"
+        dbname=database_name,
+        user=user,
+        password=password,
+        host=host,
+        port=port
     )
 
-    try:
-        cur = conn.cursor()
+    cur = conn.cursor()
 
-        cur.execute("SELECT AVG(total_exec_time / 1000) AS average_execution_time_seconds FROM pg_stat_statements;")
-        result = cur.fetchone()
-        average_execution_time_seconds = result[0]
+    cur.execute("""
+        SELECT buffers_backend / NULLIF(buffers_alloc, 0) * 100 AS buffers_backend_percent
+        FROM pg_stat_bgwriter;
+    """)
 
-        cur.execute("SELECT pg_stat_statements_reset();")
+    buffer_percent = cur.fetchone()[0]
 
-        conn.commit()
+    cur.close()
+    conn.close()
 
-        cur.close()
-        conn.close()
+    return buffer_percent
 
-        if average_execution_time_seconds is not None:
-            formated_time = "{:.5f}".format(average_execution_time_seconds)
-            print(formated_time)
-            return formated_time
-
-    except Exception as e:
-        print(f"Ошибка: {e}")
-        return None
-
-
-get_average_execution_time_and_reset_stats()
-# average_time = get_average_execution_time_and_reset_stats()
-# if average_time is not None:
-#     formated_time = "{:.2f}".format(average_time)
-#     print(f"Среднее время выполнения запросов: {formated_time} секунд")
-# else:
-#     print("Не удалось получить среднее время выполнения запросов.")
+buffer_percent = get_buffer_usage_percent()
+print(f"Процент загруженности буфера: {buffer_percent:.2f}%")
