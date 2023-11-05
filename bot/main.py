@@ -22,7 +22,7 @@ def start(message):
 
 @bot.message_handler(content_types=['text'])
 def func(message):
-    if message.text == "Cписок команд":
+    if message.text == "Подробная информация по БД":
         show_all_commands(message)
     elif message.text == "Обновить БД":
         rebase_db(message)
@@ -34,10 +34,10 @@ def func(message):
         bot.send_message(message.chat.id, text="На такую команду я не запрограммирован...")
 
 
-def show_all_commands(message):
-    button = telebot.types.InlineKeyboardButton('Показать все БД', callback_data='my_button')
-    keyboard = telebot.types.InlineKeyboardMarkup().add(button)
-    bot.send_message(message.chat.id, 'Cписок команд', reply_markup=keyboard)
+async def show_all_commands(message):
+    keyboard = create_inline_keyboard("show_bd_for_info")
+    test = await bot.send_message(message.chat.id, 'Выберите нужную базу данных', reply_markup=keyboard)
+    delete_message(test)
 
 
 def warning_session_message(id, number):
@@ -54,11 +54,12 @@ def warning_long_query_message(id, pid, number, query):
 
 def check_login(message):
     if message.text == ADMIN_PASSWORD:
+        delete_or_edit_msg(message)
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Выключить БД")
         btn2 = types.KeyboardButton("Перезагрузить БД")
         btn3 = types.KeyboardButton("Включить БД")
-        btn4 = types.KeyboardButton("Cписок команд")
+        btn4 = types.KeyboardButton("Подробная информация по БД")
         markup.add(btn1, btn2, btn3, btn4)
         bot.send_message(message.chat.id, 'Вход успешен', reply_markup=markup)
         write_admin(message.chat.id)
@@ -82,11 +83,14 @@ def on_db(message):
     bot.send_message(message.chat.id, 'Какую БД будем включать?', reply_markup=keyboard)
 
 
+def delete_or_edit_msg(message):
+    bot.delete_message(message.chat.id, message.message_id)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
 def process_callback_button(call):
     keyboard = create_inline_keyboard("show_bd_for_info")
     bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
-
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('avg_time'))
