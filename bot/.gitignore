@@ -4,3 +4,4 @@ data.json
 config.py
 data.db
 consts.json
+backup.sql
