@@ -4,6 +4,9 @@ import subprocess
 def backup_and_restart_postgresql(database_name):
     container_name = "db_monitoring_bot-db-1"
     try:
+        checkpoint_command = f"docker exec -i {container_name} psql -U postgres {database_name} -c 'CHECKPOINT;'"
+        subprocess.run(checkpoint_command, shell=True)
+
         stop_command = f"docker stop {container_name}"
         subprocess.run(stop_command, shell=True)
 
