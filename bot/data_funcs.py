@@ -1,6 +1,7 @@
 import sqlite3
 from config import DB_NAMES
 from datetime import datetime, timedelta
+from json import load, dump
 
 
 def clear_db():
@@ -41,7 +42,7 @@ def write_metrics_value(db_name: str, table: str, value: str):
         cur.execute(
             f"INSERT INTO '{table}' VALUES ('{db_name}', '{value}', '{now}');"
         )
-    elif now - last > timedelta(minutes=5):
+    elif now - last > timedelta(minutes=get_stats_check_time()):
         cur.execute(
             f"INSERT INTO {table} VALUES ('{db_name}', '{value}', '{now}');"
         )
@@ -100,6 +101,19 @@ def get_admins():
     cur.close()
     return rows
 
+
+def get_stats_check_time():
+    with open("consts.json", "r") as file:
+        data = load(file)
+    return data["STATS_CHECK_TIME"]
+
+
+def change_stats_check_time(value):
+    with open("consts.json", "r") as file:
+        data = load(file)
+    data["STATS_CHECK_TIME"] = value
+    with open("consts.json" "w") as file:
+        dump(data, file)
 
 create_tables()
 # print(get_last_record("active_sessions", "test_db"))
