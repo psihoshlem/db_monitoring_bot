@@ -26,7 +26,7 @@ def create_and_populate_table(create=True):
             );
         """)
 
-        for i in range(101):
+        for i in range(1, 1001):  # Изменим диапазон от 1 до 1000
             cur.execute("INSERT INTO numbers (value) VALUES (%s)", (i,))
 
         conn.commit()

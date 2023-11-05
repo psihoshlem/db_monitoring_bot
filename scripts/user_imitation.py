@@ -41,7 +41,7 @@ def simulate_user():
             if total_sum:
                 print(f"Сумма всех чисел: {total_sum[0]}")
 
-            cur.execute(f"SELECT pg_sleep(30);")
+            # cur.execute(f"SELECT pg_sleep(30);")
 
 
             time.sleep(random.uniform(1, 5))
