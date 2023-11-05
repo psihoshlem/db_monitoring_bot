@@ -3,12 +3,13 @@ import telebot
 
 from config import BOT_TOKEN, ADMIN_PASSWORD
 
-from functions import write_admin
-from functions import get_data_json, get_statistic_chart
+from functions import get_statistic_chart, get_lwlock_count, get_active_sessions
 from functions import terminate_long_running_queries, get_average_execution_time_and_reset_stats
 from shutdown_db import stop_postgresql_with_backup
 from start_db import start_postgresql_with_restore
 from restart_db import backup_and_restart_postgresql
+
+from data_funcs import get_databases, add_admin, change_stats_check_time
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -24,7 +25,7 @@ def start(message):
 def func(message):
     if message.text == "Подробная информация по БД":
         show_all_commands(message)
-    elif message.text == "Обновить БД":
+    elif message.text == "Перезагрузить БД":
         rebase_db(message)
     elif message.text == "Выключить БД":
         off_db(message)
@@ -108,7 +109,7 @@ def show_logs(call):
     if long_query:
         for pid, duration in long_query:
             bot.send_message(
-                call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", 
+                call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.",
                 parse_mode="HTML"
             )
     else:
@@ -125,7 +126,7 @@ def process_callback(call):
     keyboard = telebot.types.InlineKeyboardMarkup().add(check_graf, configuration)
     keyboard.row(avg_time)
     bot.send_message(
-        call.message.chat.id, 
+        call.message.chat.id,
         f"<b>db:</b> {db_name}\n" +
         f"<b>Сессии lwlock: </b> {get_lwlock_count()}\n" +
         f"<b>Активные сессии:</b> {get_active_sessions()}\n" +
@@ -201,7 +202,10 @@ def process_callback_button(call):
 
 
 def set_time_params(message):
-    bot.send_message(message.chat.id, f'Выбранно время {message.text}')
+    number_time = int(message.text)
+    change_stats_check_time(number_time)
+    bot.send_message(message.chat.id, f'Выбранно время <b>{message.text}</b>', parse_mode="HTML")
+
 
 def create_inline_keyboard(key_value):
     dbs = get_databases()

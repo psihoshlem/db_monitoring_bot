@@ -1,5 +1,5 @@
 from functions import (
-    get_lwlock_count, 
+    get_lwlock_count,
     get_active_sessions,
     track_long_running_queries,
 )

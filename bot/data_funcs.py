@@ -112,7 +112,7 @@ def change_stats_check_time(value):
     with open("consts.json", "r") as file:
         data = load(file)
     data["STATS_CHECK_TIME"] = value
-    with open("consts.json" "w") as file:
+    with open("consts.json", "w") as file:
         dump(data, file)
 
 create_tables()
