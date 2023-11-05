@@ -48,7 +48,11 @@ def warning_session_message(id, number):
 def warning_long_query_message(id, pid, number, query):
     fix_button = telebot.types.InlineKeyboardButton('🔧 Устранить', callback_data='fix_logs')
     keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
-    bot.send_message(id, f'⚠️ <b>Выполняется слишком долгий запрос:</b>\n<b>PID: </b>{pid}\n<b>Время запроса: </b>{number}\n<b>Имя запроса:</b>{query}', reply_markup=keyboard, parse_mode="HTML")
+    bot.send_message(
+        id,
+        f'⚠️ <b>Выполняется слишком долгий запрос:</b>\n<b>PID: </b>{pid}\n<b>Время запроса: </b>{number}\n<b>Имя запроса:</b>{query}', 
+        reply_markup=keyboard, parse_mode="HTML"
+    )
 
 
 def check_login(message):
@@ -61,7 +65,7 @@ def check_login(message):
         btn4 = types.KeyboardButton("Подробная информация по БД")
         markup.add(btn1, btn2, btn3, btn4)
         bot.send_message(message.chat.id, 'Вход успешен', reply_markup=markup)
-        write_admin(message.chat.id)
+        add_admin(message.chat.id)
     else:
         sent = bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
         bot.register_next_step_handler(sent, check_login)
@@ -103,7 +107,10 @@ def show_logs(call):
     long_query = terminate_long_running_queries()
     if long_query:
         for pid, duration in long_query:
-            bot.send_message(call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", parse_mode="HTML")
+            bot.send_message(
+                call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", 
+                parse_mode="HTML"
+            )
     else:
         bot.send_message(call.message.chat.id, "✅ Все запросы остановлены")
 
@@ -117,7 +124,14 @@ def process_callback(call):
     avg_time = telebot.types.InlineKeyboardButton('Средняя продолжительность', callback_data=f'avg_time')
     keyboard = telebot.types.InlineKeyboardMarkup().add(check_graf, configuration)
     keyboard.row(avg_time)
-    bot.send_message(call.message.chat.id, f"<b>db:</b> {db_name}\n<b>Сессии lwlock:</b> ?\n<b>Активные сессии:</b> ?\n<b>Процент загруженности буфера: ?</b>",reply_markup=keyboard, parse_mode="HTML")
+    bot.send_message(
+        call.message.chat.id, 
+        f"<b>db:</b> {db_name}\n" +
+        f"<b>Сессии lwlock: </b> {get_lwlock_count()}\n" +
+        f"<b>Активные сессии:</b> {get_active_sessions()}\n" +
+        f"<b>Процент загруженности буфера: -</b>",
+        reply_markup=keyboard, parse_mode="HTML"
+    )
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('check_graf'))
@@ -190,7 +204,7 @@ def set_time_params(message):
     bot.send_message(message.chat.id, f'Выбранно время {message.text}')
 
 def create_inline_keyboard(key_value):
-    dbs = get_data_json()["databases"].keys()
+    dbs = get_databases()
     keyboard = types.InlineKeyboardMarkup()
     buttons = []
     if key_value == "show_bd_for_info":
