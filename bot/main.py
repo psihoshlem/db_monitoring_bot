@@ -14,6 +14,7 @@ from data_funcs import get_databases, add_admin, change_stats_check_time
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
 
+message_for_delete = []
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -37,7 +38,9 @@ def func(message):
 
 def show_all_commands(message):
     keyboard = create_inline_keyboard("show_bd_for_info")
-    test = bot.send_message(message.chat.id, 'Выберите нужную базу данных', reply_markup=keyboard)
+    msg_info = bot.send_message(message.chat.id, 'Выберите нужную базу данных', reply_markup=keyboard)
+    global message_for_delete
+    message_for_delete = msg_info
 
 
 def warning_session_message(id, number):
@@ -58,7 +61,9 @@ def warning_long_query_message(id, pid, number, query):
 
 def check_login(message):
     if message.text == ADMIN_PASSWORD:
-        delete_or_edit_msg(message)
+        global message_for_delete
+        message_for_delete = message
+        delete_or_edit_msg()
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Выключить БД")
         btn2 = types.KeyboardButton("Перезагрузить БД")
@@ -74,27 +79,27 @@ def check_login(message):
 
 def rebase_db(message):
     keyboard = create_inline_keyboard("show_bd_for_rebase")
-    bot.send_message(message.chat.id, 'Какую БД будем перезагружать?', reply_markup=keyboard)
+    msg_info = bot.send_message(message.chat.id, 'Какую БД будем перезагружать?', reply_markup=keyboard)
+    global message_for_delete
+    message_for_delete = msg_info
 
 
 def off_db(message):
     keyboard = create_inline_keyboard("show_bd_for_off")
-    bot.send_message(message.chat.id, 'Какую БД будем выключать?', reply_markup=keyboard)
+    msg_info = bot.send_message(message.chat.id, 'Какую БД будем выключать?', reply_markup=keyboard)
+    global message_for_delete
+    message_for_delete = msg_info
 
 
 def on_db(message):
     keyboard = create_inline_keyboard("show_bd_for_on")
-    bot.send_message(message.chat.id, 'Какую БД будем включать?', reply_markup=keyboard)
+    msg_info = bot.send_message(message.chat.id, 'Какую БД будем включать?', reply_markup=keyboard)
+    global message_for_delete
+    message_for_delete = msg_info
 
 
-def delete_or_edit_msg(message):
-    bot.delete_message(message.chat.id, message.message_id)
-
-
-@bot.callback_query_handler(func=lambda call: call.data == 'my_button')
-def process_callback_button(call):
-    keyboard = create_inline_keyboard("show_bd_for_info")
-    bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
+def delete_or_edit_msg():
+    bot.delete_message(message_for_delete.chat.id, message_for_delete.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('avg_time'))
@@ -118,6 +123,7 @@ def show_logs(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('show_all_db'))
 def process_callback(call):
+    delete_or_edit_msg()
     callback_data = call.data
     db_name = callback_data.split('-')[1]
     check_graf = telebot.types.InlineKeyboardButton('Графики', callback_data=f'check_graf-{db_name}')
@@ -139,13 +145,33 @@ def process_callback(call):
 def process_callback_button(call):
     callback_data = call.data
     db_name = callback_data.split('-')[1]
-    buf1, buf2 = get_statistic_chart(db_name)
-    bot.send_photo(call.message.chat.id, photo=buf1, caption=db_name)
-    bot.send_photo(call.message.chat.id, photo=buf2, caption=db_name)
+    buttons = [
+        types.InlineKeyboardButton('Сессии lwlock', callback_data=f'print_graf-lwlock_sessions-{db_name}'),
+        types.InlineKeyboardButton('Активные сессии', callback_data=f'print_graf-active_sessions-{db_name}'),
+        #types.InlineKeyboardButton('Процент загруженности буфера', callback_data=f'print_graf-bufer-{db_name}'),
+        #types.InlineKeyboardButton('Средняя продолжительность запроса', callback_data=f'print_graf-avg-{db_name}')
+    ]
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    for button in buttons:
+        keyboard.add(button)
+    msg_info = bot.send_message(call.message.chat.id, 'Выберите график для вывода', reply_markup=keyboard)
+    global message_for_delete
+    message_for_delete = msg_info
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('print_graf'))
+def process_callback_button(call):
+    delete_or_edit_msg()
+    callback_data = call.data
+    graf_name = callback_data.split('-')[1]
+    db_name = callback_data.split('-')[2]
+    buf = get_statistic_chart(graf_name, db_name)
+    bot.send_photo(call.message.chat.id, photo=buf, caption=db_name)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('rebase_db'))
 def process_callback_button(call):
+    delete_or_edit_msg()
     callback_data = call.data
     db_name = callback_data.split('-')[1]
 
@@ -156,6 +182,7 @@ def process_callback_button(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('off_db'))
 def process_callback_button(call):
+    delete_or_edit_msg()
     callback_data = call.data
     db_name = callback_data.split('-')[1]
 
@@ -165,6 +192,7 @@ def process_callback_button(call):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('on_db'))
 def process_callback_button(call):
+    delete_or_edit_msg()
     callback_data = call.data
     db_name = callback_data.split('-')[1]
 
@@ -182,11 +210,14 @@ def process_callback_button(call):
     keyboard = telebot.types.InlineKeyboardMarkup()
     for button in buttons:
         keyboard.add(button)
-    bot.send_message(call.message.chat.id, 'Установите время для метрик', reply_markup=keyboard)
+    msg_info = bot.send_message(call.message.chat.id, 'Установите время для метрик', reply_markup=keyboard)
+    global message_for_delete
+    message_for_delete = msg_info
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('set_time'))
 def process_callback_button(call):
+    delete_or_edit_msg()
     callback_data = call.data
     conf_param = callback_data.split('-')[1]
     if conf_param == "lwlock":
