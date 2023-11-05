@@ -21,7 +21,7 @@ def create_tables():
     cur.execute("CREATE TABLE IF NOT EXISTS databases(name text);")
     cur.execute("CREATE TABLE IF NOT EXISTS admins(id int);")
     for table_name in [
-        "active_sessions", "lwlock_sessions", "bg_processess"
+        "active_sessions", "lwlock_sessions", "bg_processess", "avg_time"
     ]:
         cur.execute(
             f"CREATE TABLE IF NOT EXISTS {table_name}" +

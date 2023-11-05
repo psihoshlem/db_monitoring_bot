@@ -99,7 +99,8 @@ def on_db(message):
 
 
 def delete_or_edit_msg():
-    bot.delete_message(message_for_delete.chat.id, message_for_delete.message_id)
+    if message_for_delete != []:
+        bot.delete_message(message_for_delete.chat.id, message_for_delete.message_id)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('avg_time'))
@@ -148,8 +149,8 @@ def process_callback_button(call):
     buttons = [
         types.InlineKeyboardButton('Сессии lwlock', callback_data=f'print_graf-lwlock_sessions-{db_name}'),
         types.InlineKeyboardButton('Активные сессии', callback_data=f'print_graf-active_sessions-{db_name}'),
+        types.InlineKeyboardButton('Среднее время транзакции', callback_data=f'print_graf-avg_time-{db_name}'),
         #types.InlineKeyboardButton('Процент загруженности буфера', callback_data=f'print_graf-bufer-{db_name}'),
-        #types.InlineKeyboardButton('Средняя продолжительность запроса', callback_data=f'print_graf-avg-{db_name}')
     ]
     keyboard = telebot.types.InlineKeyboardMarkup()
     for button in buttons:

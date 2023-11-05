@@ -23,8 +23,8 @@ conn = psycopg2.connect(
 def get_active_sessions() -> int:
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT count(*) FROM pg_stat_activity " +
-            "WHERE state='active';"
+            f"SELECT numbackends FROM pg_stat_database " +
+            "WHERE datname = 'test_db';"
         )
         result = cur.fetchone()
         return result[0]
@@ -156,7 +156,7 @@ def get_average_execution_time_and_reset_stats():
             conn.commit()
             if average_execution_time_seconds is not None:
                 formated_time = "{:.5f}".format(average_execution_time_seconds)
-                return formated_time
+                return average_execution_time_seconds
 
 
     except Exception as e:
