@@ -43,10 +43,18 @@ def show_all_commands(message):
     message_for_delete = msg_info
 
 
-def warning_session_message(id, number):
-    fix_button = telebot.types.InlineKeyboardButton('Починить', callback_data='fix_logs')
-    keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
-    bot.send_message(id, f'Чиним БД {number}', reply_markup=keyboard)
+def warning_session_message(id, number, type):
+    translate = {
+        "active_sessions": "количеством активных сессий",
+        "lwlock_sessions": "количеством сессий с lwlock",
+        "bg_processess": "нагрузкой буфера",
+        "avg_time": "временем транзакций"
+    }
+    translated = translate[type]
+    bot.send_message(
+        id, f"Что-то не так с {translated}\n" +
+        f"Значение превысило среднее в 3 раза ({number})"
+    )
 
 
 def warning_long_query_message(id, pid, number, query):
