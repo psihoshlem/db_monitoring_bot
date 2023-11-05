@@ -34,10 +34,9 @@ def func(message):
         bot.send_message(message.chat.id, text="На такую команду я не запрограммирован...")
 
 
-async def show_all_commands(message):
+def show_all_commands(message):
     keyboard = create_inline_keyboard("show_bd_for_info")
-    test = await bot.send_message(message.chat.id, 'Выберите нужную базу данных', reply_markup=keyboard)
-    delete_message(test)
+    test = bot.send_message(message.chat.id, 'Выберите нужную базу данных', reply_markup=keyboard)
 
 
 def warning_session_message(id, number):
