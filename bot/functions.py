@@ -27,7 +27,7 @@ def get_active_sessions() -> int:
             "WHERE state='active';"
         )
         result = cur.fetchone()
-        return result[0][0]
+        return result[0]
 
 
 def get_lwlock_count() -> int:

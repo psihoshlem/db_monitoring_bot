@@ -146,15 +146,17 @@ def process_callback_button(call):
     callback_data = call.data
     db_name = callback_data.split('-')[1]
     buttons = [
-        lwlock = telebot.types.InlineKeyboardButton('Сессии lwlock', callback_data=f'print_graf-lwlock-{db_name}')
-        active_sessions = telebot.types.InlineKeyboardButton('Активные сессии', callback_data=f'print_graf-sessions-{db_name}')
-        bufer = telebot.types.InlineKeyboardButton('Процент загруженности буфера', callback_data=f'print_graf-bufer-{db_name}')
-        avg_time_required = telebot.types.InlineKeyboardButton('Средняя продолжительность запроса', callback_data=f'print_graf-avg-{db_name}')
+        types.InlineKeyboardButton('Сессии lwlock', callback_data=f'print_graf-lwlock_sessions-{db_name}'),
+        types.InlineKeyboardButton('Активные сессии', callback_data=f'print_graf-active_sessions-{db_name}'),
+        #types.InlineKeyboardButton('Процент загруженности буфера', callback_data=f'print_graf-bufer-{db_name}'),
+        #types.InlineKeyboardButton('Средняя продолжительность запроса', callback_data=f'print_graf-avg-{db_name}')
     ]
     keyboard = telebot.types.InlineKeyboardMarkup()
     for button in buttons:
         keyboard.add(button)
     msg_info = bot.send_message(call.message.chat.id, 'Выберите график для вывода', reply_markup=keyboard)
+    global message_for_delete
+    message_for_delete = msg_info
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('print_graf'))
@@ -163,9 +165,8 @@ def process_callback_button(call):
     callback_data = call.data
     graf_name = callback_data.split('-')[1]
     db_name = callback_data.split('-')[2]
-    # buf1, buf2 = get_statistic_chart(db_name)
-    # bot.send_photo(call.message.chat.id, photo=buf1, caption=db_name)
-    # bot.send_photo(call.message.chat.id, photo=buf2, caption=db_name)
+    buf = get_statistic_chart(graf_name, db_name)
+    bot.send_photo(call.message.chat.id, photo=buf, caption=db_name)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('rebase_db'))
@@ -209,11 +210,14 @@ def process_callback_button(call):
     keyboard = telebot.types.InlineKeyboardMarkup()
     for button in buttons:
         keyboard.add(button)
-    bot.send_message(call.message.chat.id, 'Установите время для метрик', reply_markup=keyboard)
+    msg_info = bot.send_message(call.message.chat.id, 'Установите время для метрик', reply_markup=keyboard)
+    global message_for_delete
+    message_for_delete = msg_info
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('set_time'))
 def process_callback_button(call):
+    delete_or_edit_msg()
     callback_data = call.data
     conf_param = callback_data.split('-')[1]
     if conf_param == "lwlock":
