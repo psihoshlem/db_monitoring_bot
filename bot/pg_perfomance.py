@@ -1,6 +1,6 @@
 import psycopg2
 
-def get_buffer_usage_percent():
+def calculate_buffer_usage():
     database_name = "test_db"
     user = "postgres"
     password = "1234"
@@ -18,16 +18,24 @@ def get_buffer_usage_percent():
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT buffers_backend / NULLIF(buffers_alloc, 0) * 100 AS buffers_backend_percent
+        SELECT buffers_backend, buffers_alloc
         FROM pg_stat_bgwriter;
     """)
 
-    buffer_percent = cur.fetchone()[0]
+    result = cur.fetchone()
+    if result is not None:
+        buffers_backend, buffers_alloc = result
+        if buffers_alloc > 0:
+            buffer_percent = (buffers_backend / buffers_alloc) * 100
+            return buffer_percent
 
     cur.close()
     conn.close()
 
-    return buffer_percent
+    return None
 
-buffer_percent = get_buffer_usage_percent()
-print(f"Процент загруженности буфера: {buffer_percent:.2f}%")
+buffer_percent = calculate_buffer_usage()
+if buffer_percent is not None:
+    print(f"Процент загруженности буфера: {buffer_percent:.2f}%")
+else:
+    print("Данные о загрузке буфера недоступны.")
