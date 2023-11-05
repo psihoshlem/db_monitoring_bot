@@ -1,6 +1,6 @@
 from functions import (
     get_lwlock_count,
-    get_active_sessions,
+    get_active_sessions, calculate_buffer_usage,
     track_long_running_queries, get_average_execution_time_and_reset_stats
 )
 import json
@@ -26,6 +26,7 @@ if __name__=="__main__":
             write_to_store("active_sessions", get_active_sessions())
             write_to_store("lwlock_sessions", get_lwlock_count())
             write_to_store("avg_time", get_average_execution_time_and_reset_stats())
+            write_to_store("bg_processess", calculate_buffer_usage())
             long_query = track_long_running_queries()
             if long_query:
                 for pid, duration, query in long_query:

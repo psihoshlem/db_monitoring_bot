@@ -3,7 +3,14 @@ import telebot
 
 from config import BOT_TOKEN, ADMIN_PASSWORD
 
-from functions import get_statistic_chart, get_lwlock_count, get_active_sessions
+from functions import (
+    get_statistic_chart,
+    get_lwlock_count,
+    get_active_sessions,
+    terminate_long_running_queries, 
+    get_average_execution_time_and_reset_stats,
+    calculate_buffer_usage
+)
 from functions import terminate_long_running_queries, get_average_execution_time_and_reset_stats
 from shutdown_db import stop_postgresql_with_backup
 from start_db import start_postgresql_with_restore
@@ -145,7 +152,7 @@ def process_callback(call):
         f"<b>db:</b> {db_name}\n" +
         f"<b>Сессии lwlock: </b> {get_lwlock_count()}\n" +
         f"<b>Активные сессии:</b> {get_active_sessions()}\n" +
-        f"<b>Процент загруженности буфера: -</b>",
+        f"<b>Процент загруженности буфера: {calculate_buffer_usage()}</b>",
         reply_markup=keyboard, parse_mode="HTML"
     )
 
@@ -158,7 +165,7 @@ def process_callback_button(call):
         types.InlineKeyboardButton('Сессии lwlock', callback_data=f'print_graf-lwlock_sessions-{db_name}'),
         types.InlineKeyboardButton('Активные сессии', callback_data=f'print_graf-active_sessions-{db_name}'),
         types.InlineKeyboardButton('Среднее время транзакции', callback_data=f'print_graf-avg_time-{db_name}'),
-        #types.InlineKeyboardButton('Процент загруженности буфера', callback_data=f'print_graf-bufer-{db_name}'),
+        types.InlineKeyboardButton('Процент загруженности буфера', callback_data=f'print_graf-bg_processess-{db_name}'),
     ]
     keyboard = telebot.types.InlineKeyboardMarkup()
     for button in buttons:

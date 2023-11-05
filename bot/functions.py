@@ -175,7 +175,33 @@ def get_average_execution_time_and_reset_stats():
 #         # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
 
-
+def calculate_buffer_usage():
+    database_name = "test_db"
+    user = "postgres"
+    password = "1234"
+    host = "localhost"
+    port = "5432"
+    conn = psycopg2.connect(
+        dbname=database_name,
+        user=user,
+        password=password,
+        host=host,
+        port=port
+    )
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT buffers_backend, buffers_alloc
+        FROM pg_stat_bgwriter;
+    """)
+    result = cur.fetchone()
+    if result is not None:
+        buffers_backend, buffers_alloc = result
+        if buffers_alloc > 0:
+            buffer_percent = (buffers_backend / buffers_alloc) * 100
+            return round(buffer_percent, 3)
+    cur.close()
+    conn.close()
+    return None
 
 def get_statistic_chart(table, db_name: str = "test_db"):
     translate = {
