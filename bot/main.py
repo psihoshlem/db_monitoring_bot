@@ -3,12 +3,13 @@ import telebot
 
 from config import BOT_TOKEN, ADMIN_PASSWORD
 
-from functions import write_admin
-from functions import get_data_json, get_statistic_chart
+from functions import get_statistic_chart, get_lwlock_count, get_active_sessions
 from functions import terminate_long_running_queries, get_average_execution_time_and_reset_stats
 from shutdown_db import stop_postgresql_with_backup
 from start_db import start_postgresql_with_restore
 from restart_db import backup_and_restart_postgresql
+
+from data_funcs import get_databases, add_admin, change_stats_check_time
 
 bot = telebot.TeleBot(BOT_TOKEN)
 const_for_send_msg = True
@@ -22,9 +23,9 @@ def start(message):
 
 @bot.message_handler(content_types=['text'])
 def func(message):
-    if message.text == "Cписок команд":
+    if message.text == "Подробная информация по БД":
         show_all_commands(message)
-    elif message.text == "Обновить БД":
+    elif message.text == "Перезагрузить БД":
         rebase_db(message)
     elif message.text == "Выключить БД":
         off_db(message)
@@ -35,9 +36,8 @@ def func(message):
 
 
 def show_all_commands(message):
-    button = telebot.types.InlineKeyboardButton('Показать все БД', callback_data='my_button')
-    keyboard = telebot.types.InlineKeyboardMarkup().add(button)
-    bot.send_message(message.chat.id, 'Cписок команд', reply_markup=keyboard)
+    keyboard = create_inline_keyboard("show_bd_for_info")
+    test = bot.send_message(message.chat.id, 'Выберите нужную базу данных', reply_markup=keyboard)
 
 
 def warning_session_message(id, number):
@@ -49,19 +49,24 @@ def warning_session_message(id, number):
 def warning_long_query_message(id, pid, number, query):
     fix_button = telebot.types.InlineKeyboardButton('🔧 Устранить', callback_data='fix_logs')
     keyboard = telebot.types.InlineKeyboardMarkup().add(fix_button)
-    bot.send_message(id, f'⚠️ <b>Выполняется слишком долгий запрос:</b>\n<b>PID: </b>{pid}\n<b>Время запроса: </b>{number}\n<b>Имя запроса:</b>{query}', reply_markup=keyboard, parse_mode="HTML")
+    bot.send_message(
+        id,
+        f'⚠️ <b>Выполняется слишком долгий запрос:</b>\n<b>PID: </b>{pid}\n<b>Время запроса: </b>{number}\n<b>Имя запроса:</b>{query}', 
+        reply_markup=keyboard, parse_mode="HTML"
+    )
 
 
 def check_login(message):
     if message.text == ADMIN_PASSWORD:
+        delete_or_edit_msg(message)
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         btn1 = types.KeyboardButton("Выключить БД")
         btn2 = types.KeyboardButton("Перезагрузить БД")
         btn3 = types.KeyboardButton("Включить БД")
-        btn4 = types.KeyboardButton("Cписок команд")
+        btn4 = types.KeyboardButton("Подробная информация по БД")
         markup.add(btn1, btn2, btn3, btn4)
         bot.send_message(message.chat.id, 'Вход успешен', reply_markup=markup)
-        write_admin(message.chat.id)
+        add_admin(message.chat.id)
     else:
         sent = bot.send_message(message.chat.id, 'Пароль неверен, введите ещё раз')
         bot.register_next_step_handler(sent, check_login)
@@ -82,11 +87,14 @@ def on_db(message):
     bot.send_message(message.chat.id, 'Какую БД будем включать?', reply_markup=keyboard)
 
 
+def delete_or_edit_msg(message):
+    bot.delete_message(message.chat.id, message.message_id)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == 'my_button')
 def process_callback_button(call):
     keyboard = create_inline_keyboard("show_bd_for_info")
     bot.send_message(call.message.chat.id, 'Cписок всех бд', reply_markup=keyboard)
-
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('avg_time'))
@@ -100,7 +108,10 @@ def show_logs(call):
     long_query = terminate_long_running_queries()
     if long_query:
         for pid, duration in long_query:
-            bot.send_message(call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.", parse_mode="HTML")
+            bot.send_message(
+                call.message.chat.id, f"✅ Прерван запрос <b>PID: </b>{pid}\n<b>Запрос выполнялся: </b>{duration}.",
+                parse_mode="HTML"
+            )
     else:
         bot.send_message(call.message.chat.id, "✅ Все запросы остановлены")
 
@@ -114,7 +125,14 @@ def process_callback(call):
     avg_time = telebot.types.InlineKeyboardButton('Средняя продолжительность', callback_data=f'avg_time')
     keyboard = telebot.types.InlineKeyboardMarkup().add(check_graf, configuration)
     keyboard.row(avg_time)
-    bot.send_message(call.message.chat.id, f"<b>db:</b> {db_name}\n<b>Сессии lwlock:</b> ?\n<b>Активные сессии:</b> ?\n<b>Процент загруженности буфера: ?</b>",reply_markup=keyboard, parse_mode="HTML")
+    bot.send_message(
+        call.message.chat.id,
+        f"<b>db:</b> {db_name}\n" +
+        f"<b>Сессии lwlock: </b> {get_lwlock_count()}\n" +
+        f"<b>Активные сессии:</b> {get_active_sessions()}\n" +
+        f"<b>Процент загруженности буфера: -</b>",
+        reply_markup=keyboard, parse_mode="HTML"
+    )
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('check_graf'))
@@ -184,10 +202,13 @@ def process_callback_button(call):
 
 
 def set_time_params(message):
-    bot.send_message(message.chat.id, f'Выбранно время {message.text}')
+    number_time = int(message.text)
+    change_stats_check_time(number_time)
+    bot.send_message(message.chat.id, f'Выбранно время <b>{message.text}</b>', parse_mode="HTML")
+
 
 def create_inline_keyboard(key_value):
-    dbs = get_data_json()["databases"].keys()
+    dbs = get_databases()
     keyboard = types.InlineKeyboardMarkup()
     buttons = []
     if key_value == "show_bd_for_info":

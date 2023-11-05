@@ -2,7 +2,7 @@ import psycopg2
 import json
 import matplotlib.pyplot as plt
 import io
-
+from data_funcs import get_ten_last_records
 from config import (
     db_name,
     db_user,
@@ -70,12 +70,6 @@ def terminate_process(id: int):
             "SELECT pg_terminate_backend(pid)" + 
             f" FROM pg_stat_activity WHERE pid = {id};"
         )
-
-
-def write_admin(id: int):
-    data = get_data_json()
-    data["admins"].append(id)
-    write_data_json(data)
 
 
 def track_long_running_queries():
@@ -181,20 +175,12 @@ def get_average_execution_time_and_reset_stats():
 #         # f"Прерывание запроса с PID {pid}, который выполняется уже {duration}.
 
 
-def get_data_json():
-    with open("data.json", "r") as file:
-        data = json.loads(file.read())
-    return data
 
-
-def write_data_json(data):
-    with open("data.json", "w") as file:
-        file.write(json.dumps(data))
-    
 
 def get_statistic_chart(db_name: str = "test_db"):
-    active_sessions = get_data_json()["databases"]["test_db"]["active_sessions"]
-    lwlock_sessions = get_data_json()["databases"]["test_db"]["lwlock_sessions"]
+    active_sessions = get_ten_last_records("active_sessions", db_name)
+    lwlock_sessions = get_ten_last_records("lwlock_sessions", db_name)
+    print(active_sessions, lwlock_sessions)
     x = [i+1 for i in range(len(active_sessions))]
     plt.figure()
     plt.plot(x, active_sessions)
