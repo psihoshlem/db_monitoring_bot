@@ -26,7 +26,7 @@ def get_active_sessions() -> int:
             "SELECT count(*) FROM pg_stat_activity " +
             "WHERE state='active';"
         )
-        result = cur.fetchall()
+        result = cur.fetchone()
         return result[0][0]
 
 
@@ -177,27 +177,23 @@ def get_average_execution_time_and_reset_stats():
 
 
 
-def get_statistic_chart(db_name: str = "test_db"):
-    active_sessions = get_ten_last_records("active_sessions", db_name)
-    lwlock_sessions = get_ten_last_records("lwlock_sessions", db_name)
-    print(active_sessions, lwlock_sessions)
-    x = [i+1 for i in range(len(active_sessions))]
+def get_statistic_chart(table, db_name: str = "test_db"):
+    translate = {
+        "active_sessions": "Активные сессии",
+        "lwlock_sessions": "Сессии с lwlock",
+        "bg_processess": "Процент буферов занятых фоновыми процессами",
+        "avg_time": "Среднее время транзакции"
+    }
+    data = get_ten_last_records(table, db_name)
+    x = [i+1 for i in range(len(data))]
     plt.figure()
-    plt.plot(x, active_sessions)
-    plt.title("Активные сессии")
+    plt.plot(x, data)
+    plt.title(translate[table])
 
-    buf1 = io.BytesIO()
-    plt.savefig(buf1, format='png')
-    buf1.seek(0)
-    
-    plt.figure()
-    plt.plot(x, lwlock_sessions)
-    plt.title("Сессии lwlock")
-
-    buf2 = io.BytesIO()
-    plt.savefig(buf2, format='png')
-    buf2.seek(0)
-    return buf1, buf2
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png')
+    buf.seek(0)
+    return buf
 
 
 if __name__=="__main__":

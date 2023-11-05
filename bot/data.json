@@ -1,1 +1,0 @@
-{"databases": {"test_db": {"active_sessions": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], "lwlock_sessions": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]}, "test_db_second": {"active_sessions": [], "lwlock_sessions": []}}, "admins": [946525674, 946525674, 946525674]}
